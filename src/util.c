@@ -32,7 +32,9 @@
 const GumboSourcePosition kGumboEmptySourcePosition = { 0, 0, 0 };
 
 void* gumbo_parser_allocate(GumboParser* parser, size_t num_bytes) {
-  return parser->_options->allocator(parser->_options->userdata, num_bytes);
+  void* result = parser->_options->allocator(parser->_options->userdata, num_bytes);
+  assert(result);
+  return result;
 }
 
 void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
