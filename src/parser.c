@@ -2277,14 +2277,11 @@ static bool handle_after_head(GumboParser* parser, GumboToken* token) {
   }
 }
 
-static void destroy_node(GumboParser* parser, GumboNode* node) {
+static GumboNode* destroy_node(GumboParser* parser, GumboNode* node) {
   switch (node->type) {
     case GUMBO_NODE_DOCUMENT:
       {
         GumboDocument* doc = &node->v.document;
-        for (int i = 0; i < doc->children.length; ++i) {
-          destroy_node(parser, doc->children.data[i]);
-        }
         gumbo_parser_deallocate(parser, (void*) doc->children.data);
         gumbo_parser_deallocate(parser, (void*) doc->name);
         gumbo_parser_deallocate(parser, (void*) doc->public_identifier);
@@ -2296,9 +2293,6 @@ static void destroy_node(GumboParser* parser, GumboNode* node) {
         gumbo_destroy_attribute(parser, node->v.element.attributes.data[i]);
       }
       gumbo_parser_deallocate(parser, node->v.element.attributes.data);
-      for (int i = 0; i < node->v.element.children.length; ++i) {
-        destroy_node(parser, node->v.element.children.data[i]);
-      }
       gumbo_parser_deallocate(parser, node->v.element.children.data);
       break;
     case GUMBO_NODE_TEXT:
@@ -2322,6 +2316,7 @@ static void destroy_node(GumboParser* parser, GumboNode* node) {
   }
 
   gumbo_parser_deallocate(parser, node);
+  return next;
 }
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#parsing-main-inbody
@@ -3930,22 +3925,16 @@ GumboOutput* gumbo_parse_with_options(
   return parser._output;
 }
 
-void gumbo_destroy_node(GumboOptions* options, GumboNode* node) {
-  // Need a dummy GumboParser because the allocator comes along with the
-  // options object.
-  GumboParser parser;
-  parser._parser_state = NULL;
-  parser._options = options;
-  destroy_node(&parser, node);
-}
-
 void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
   // Need a dummy GumboParser because the allocator comes along with the
   // options object.
   GumboParser parser;
   parser._parser_state = NULL;
   parser._options = options;
-  destroy_node(&parser, output->document);
+  GumboNode* current = output->document;
+  while (current) {
+    current = destroy_node(&parser, current);
+  }
   for (int i = 0; i < output->errors.length; ++i) {
     gumbo_error_destroy(&parser, output->errors.data[i]);
   }
