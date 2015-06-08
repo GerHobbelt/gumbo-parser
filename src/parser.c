@@ -4069,11 +4069,12 @@ static void fragment_parser_init(GumboParser* parser, GumboTag fragment_ctx,
 
 GumboOutput* gumbo_parse(const char* buffer) {
   return gumbo_parse_with_options(
-      &kGumboDefaultOptions, buffer, strlen(buffer));
+      &kGumboDefaultOptions, NULL, buffer, strlen(buffer));
 }
 
 GumboOutput* gumbo_parse_with_options(
-    const GumboOptions* options, const char* buffer, size_t length) {
+    const GumboOptions* options, bool *timeout,
+    const char* buffer, size_t length) {
   GumboParser parser;
   parser._options = options;
   output_init(&parser);
@@ -4143,6 +4144,11 @@ GumboOutput* gumbo_parse_with_options(
       if (error) {
         error->type = GUMBO_ERR_UNACKNOWLEDGED_SELF_CLOSING_TAG;
       }
+    }
+
+    if (timeout && *timeout) {
+      parser._output->timed_out = true;
+      break;
     }
 
     ++loop_count;
