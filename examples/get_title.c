@@ -61,7 +61,8 @@ static const char* find_title(const GumboNode* root) {
         return "<empty title>";
       }
       GumboNode* title_text = child->v.element.children.data[0];
-      assert(title_text->type == GUMBO_NODE_TEXT || title_text->type == GUMBO_NODE_WHITESPACE);
+      assert(title_text->type == GUMBO_NODE_TEXT ||
+             title_text->type == GUMBO_NODE_WHITESPACE);
       return title_text->v.text.text;
     }
   }
@@ -84,8 +85,8 @@ int main(int argc, const char** argv) {
   char* input;
   int input_length;
   read_file(fp, &input, &input_length);
-  GumboOutput* output = gumbo_parse_with_options(
-      &kGumboDefaultOptions, input, input_length);
+  GumboOutput* output =
+      gumbo_parse_with_options(&kGumboDefaultOptions, input, input_length);
   const char* title = find_title(output->root);
   printf("%s\n", title);
   gumbo_destroy_output(&kGumboDefaultOptions, output);

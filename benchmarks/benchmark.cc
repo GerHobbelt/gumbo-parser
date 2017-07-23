@@ -44,7 +44,8 @@ int main(int argc, char** argv) {
 
   while ((file = readdir(dir)) != NULL) {
     std::string filename(file->d_name);
-    if (filename.length() > 5 && filename.compare(filename.length() - 5, 5, ".html") == 0) {
+    if (filename.length() > 5 &&
+        filename.compare(filename.length() - 5, 5, ".html") == 0) {
       std::string full_filename = "benchmarks/" + filename;
       std::ifstream in(full_filename.c_str(), std::ios::in | std::ios::binary);
       if (!in) {
@@ -66,8 +67,9 @@ int main(int argc, char** argv) {
       }
       clock_t end_time = clock();
       std::cout << filename << ": "
-          << (1000000 * (end_time - start_time) / (kNumReps * CLOCKS_PER_SEC))
-          << " microseconds.\n";
+                << (1000000 * (end_time - start_time) /
+                       (kNumReps * CLOCKS_PER_SEC))
+                << " microseconds.\n";
     }
   }
   closedir(dir);

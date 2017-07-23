@@ -19,10 +19,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "gtest/gtest.h"
 #include "parser.h"
 #include "test_utils.h"
 #include "util.h"
+#include "gtest/gtest.h"
 
 namespace {
 

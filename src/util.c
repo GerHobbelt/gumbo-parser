@@ -33,7 +33,7 @@
 const GumboSourcePosition kGumboEmptySourcePosition = {0, 0, 0};
 
 void* gumbo_parser_allocate(GumboParser* parser, size_t num_bytes) {
-  void *v = parser->_options->allocator(parser->_options->userdata, num_bytes);
+  void* v = parser->_options->allocator(parser->_options->userdata, num_bytes);
   if (NULL == v) {
 #ifndef _WIN32
     siglongjmp(parser->_oom_buf, 1);

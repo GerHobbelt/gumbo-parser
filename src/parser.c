@@ -15,11 +15,11 @@
 // Author: jdtang@google.com (Jonathan Tang)
 
 #include <assert.h>
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <setjmp.h>
 
 #include "attribute.h"
 #include "error.h"
@@ -2365,8 +2365,7 @@ static bool handle_after_head(GumboParser* parser, GumboToken* token) {
 }
 
 static void destroy_node(GumboParser* parser, GumboNode* node) {
-  if (NULL == node)
-    return;
+  if (NULL == node) return;
   switch (node->type) {
     case GUMBO_NODE_DOCUMENT: {
       GumboDocument* doc = &node->v.document;
@@ -3188,14 +3187,14 @@ static bool handle_in_table(GumboParser* parser, GumboToken* token) {
 
 static bool gumbo_isspace(unsigned char ch) {
   switch (ch) {
-  case ' ':
-  case '\f':
-  case '\r':
-  case '\n':
-  case '\t':
-    return true;
-  default:
-    return false;
+    case ' ':
+    case '\f':
+    case '\r':
+    case '\n':
+    case '\t':
+      return true;
+    default:
+      return false;
   }
 }
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#parsing-main-intabletext
@@ -4112,10 +4111,8 @@ GumboOutput* gumbo_parse_with_options(
   parser._options = options;
 
   if (SETJMP(parser._oom_buf)) {
-    if (parser._parser_state)
-      parser_state_destroy(&parser);
-    if (parser._tokenizer_state)
-      gumbo_tokenizer_state_destroy(&parser);
+    if (parser._parser_state) parser_state_destroy(&parser);
+    if (parser._tokenizer_state) gumbo_tokenizer_state_destroy(&parser);
     return NULL;
   }
 
@@ -4123,8 +4120,7 @@ GumboOutput* gumbo_parse_with_options(
   gumbo_tokenizer_state_init(&parser, buffer, length);
   parser_state_init(&parser);
 
-  if (NULL == parser._parser_state)
-    return NULL;
+  if (NULL == parser._parser_state) return NULL;
 
   if (options->fragment_context != GUMBO_TAG_LAST) {
     fragment_parser_init(
@@ -4225,8 +4221,7 @@ void gumbo_destroy_node(GumboOptions* options, GumboNode* node) {
 }
 
 void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
-  if (NULL == output)
-    return;
+  if (NULL == output) return;
   // Need a dummy GumboParser because the allocator comes along with the
   // options object.
   GumboParser parser;

@@ -137,8 +137,7 @@ static const char* find_last_newline(
   assert(error_location >= original_text);
   const char* c = error_location;
   // Avoid overflow segfault
-  if (c != original_text && '\n' == *c)
-    --c;
+  if (c != original_text && '\n' == *c) --c;
   for (; c != original_text && *c != '\n'; --c) {
     // There may be an error at EOF, which would be a nul byte.
     assert(*c || c == error_location);
@@ -262,8 +261,7 @@ void gumbo_print_caret_diagnostic(
 }
 
 void gumbo_error_destroy(GumboParser* parser, GumboError* error) {
-  if (NULL == error)
-    return;
+  if (NULL == error) return;
   if (error->type == GUMBO_ERR_PARSER ||
       error->type == GUMBO_ERR_UNACKNOWLEDGED_SELF_CLOSING_TAG) {
     gumbo_vector_destroy(parser, &error->v.parser.tag_stack);
