@@ -39,10 +39,10 @@
 #define TERMINATOR \
   { "", 0 }
 
-#ifndef _WIN32
-#define SETJMP(x) (sigsetjmp(x, 0))
-#else
+#ifdef _WIN32
 #define SETJMP(x) (setjmp(x))
+#else
+#define SETJMP(x) (sigsetjmp(x, 0))
 #endif
 
 typedef char gumbo_tagset[GUMBO_TAG_LAST];
@@ -350,7 +350,7 @@ typedef struct GumboInternalParserState {
   // original insertion mode at its conclusion.
   GumboInsertionMode _original_insertion_mode;
 
-  // http://www.whatwg.org/specs/web-apps/current-work/complete/parsing.html#the-stack-of-open-elements
+  // https://html.spec.whatwg.org/multipage/spec/parsing.html#the-stack-of-open-elements
   GumboVector /*GumboNode*/ _open_elements;
 
   // http://www.whatwg.org/specs/web-apps/current-work/complete/parsing.html#the-list-of-active-formatting-elements
@@ -1820,7 +1820,7 @@ static bool adoption_agency_algorithm(
     // Step 5.
     GumboNode* formatting_node = NULL;
     int formatting_node_in_open_elements = -1;
-    for (int j = state->_active_formatting_elements.length; --j >= 0;) {
+    for (int j = state->_active_formatting_elements.length, k = j - 8; --j >= k;) {
       GumboNode* current_node = state->_active_formatting_elements.data[j];
       if (current_node == &kActiveFormattingScopeMarker) {
         gumbo_debug("Broke on scope marker; aborting.\n");

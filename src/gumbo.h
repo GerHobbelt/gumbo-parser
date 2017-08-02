@@ -413,6 +413,18 @@ typedef enum {
    * should've been foster-parented, if verbatim mode is set).
    */
   GUMBO_INSERTION_FOSTER_PARENTED = 1 << 10,
+
+  /**
+   * A flag for nodes that are in the list of active formatting elements.
+   * Should never appear in a finished parse tree.
+   */
+  GUMBO_INSERTION_IN_ACTIVE_FORMATTING = 1 << 11,
+
+  /**
+   * A flag for nodes that are in the stack of open elements.  Should never
+   * appear in a finished parse tree.
+   */
+  GUMBO_INSERTION_IN_OPEN_ELEMENTS = 1 << 12,
 } GumboParseFlags;
 
 /**
