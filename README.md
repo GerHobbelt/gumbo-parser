@@ -1,3 +1,11 @@
+This is a fork of Google's Gumbo HTML parser for the purpose of
+making a binding for the Tcl tdom extension. Only changes at
+time of writing are new Visual Studio 2017 project files 
+in the tdom-libs branch intended for
+building the appropriate static libraries.
+
+The original README is below.
+
 Gumbo - A pure-C HTML5 parser.
 ============
 
