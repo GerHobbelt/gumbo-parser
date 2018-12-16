@@ -41,7 +41,7 @@ class CharRefTest : public GumboTest {
       const char* input, int additional_allowed_char, bool is_in_attribute) {
     text_ = input;
     utf8iterator_init(&parser_, input, strlen(input), &iter_);
-    bool result = consume_char_ref(
+    bool result = gumbo_consume_char_ref(
         &parser_, &iter_, additional_allowed_char, is_in_attribute, &output_);
     fflush(stdout);
     return result;

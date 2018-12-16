@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
   DIR* dir;
   struct dirent* file;
 
-  if ((dir = opendir("benchmarks")) == NULL) {
+  if ((dir = opendir("test/benchmark")) == NULL) {
     std::cout << "Couldn't find 'benchmarks' directory.  "
               << "Run from root of distribution.\n";
     exit(EXIT_FAILURE);
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
   while ((file = readdir(dir)) != NULL) {
     std::string filename(file->d_name);
     if (filename.length() > 5 && filename.compare(filename.length() - 5, 5, ".html") == 0) {
-      std::string full_filename = "benchmarks/" + filename;
+      std::string full_filename = "test/benchmark/" + filename;
       std::ifstream in(full_filename.c_str(), std::ios::in | std::ios::binary);
       if (!in) {
         std::cout << "File " << full_filename << " couldn't be read!\n";
