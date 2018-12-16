@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct GumboParser;
 struct GumboUtf8Iterator;
 
@@ -32,5 +36,9 @@ bool gumbo_consume_char_ref (
   bool is_in_attribute,
   OneOrTwoCodepoints* output
 );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // GUMBO_CHAR_REF_H_

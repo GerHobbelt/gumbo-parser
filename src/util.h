@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include "macros.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Utility function for allocating & copying a null-terminated string into a
 // freshly-allocated buffer. This is necessary for proper memory management; we
 // have the convention that all const char* in parse tree structures are
@@ -20,6 +24,10 @@ void gumbo_free(void* ptr);
 PRINTF(1) void gumbo_debug(const char* format, ...);
 #else
 PRINTF(1) static inline void gumbo_debug(const char* UNUSED_ARG(fmt), ...) {}
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif // GUMBO_UTIL_H_
