@@ -45,24 +45,31 @@ lib_LTLIBRARIES = libgumbo.la
 libgumbo_la_CFLAGS = -Wall
 libgumbo_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 libgumbo_la_SOURCES = \
+				src/ascii.c \
+				src/ascii.h \
 				src/attribute.c \
 				src/attribute.h \
 				src/char_ref.c \
 				src/char_ref.h \
 				src/error.c \
 				src/error.h \
+				src/foreign_attrs.c \
 				src/insertion_mode.h \
+				src/macros.h \
 				src/parser.c \
 				src/parser.h \
+				src/replacement.h \
 				src/string_buffer.c \
 				src/string_buffer.h \
 				src/string_piece.c \
 				src/string_piece.h \
+				src/svg_attrs.c \
+				src/svg_tags.c \
 				src/tag.c \
-				src/tag_enum.h \
-				src/tag_gperf.h \
-				src/tag_strings.h \
-				src/tag_sizes.h \
+				src/tag_lookup.c \
+				src/tag_lookup.h \
+				src/token_buffer.c \
+				src/token_buffer.h \
 				src/token_type.h \
 				src/tokenizer.c \
 				src/tokenizer.h \
@@ -73,7 +80,7 @@ libgumbo_la_SOURCES = \
 				src/util.h \
 				src/vector.c \
 				src/vector.h
-include_HEADERS = src/gumbo.h src/tag_enum.h
+include_HEADERS = src/gumbo.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gumbo.pc
@@ -86,7 +93,6 @@ gumbo_test_CPPFLAGS = \
 				-I"$(srcdir)/gtest/include"
 gumbo_test_SOURCES = \
 				tests/attribute.cc \
-				tests/char_ref.cc \
 				tests/parser.cc \
 				tests/string_buffer.cc \
 				tests/string_piece.cc \
