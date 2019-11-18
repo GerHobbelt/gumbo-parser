@@ -4,8 +4,10 @@
 #define GUMBO_XPATH_EVAL_H_A
 
 #include <stdbool.h>
-
 #include "string_buffer.h"
+#include "vector.h"
+
+#define DEFAULT_VECTOR_SIZE 10
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,26 +30,30 @@ typedef enum {
 
 typedef struct {
     XpathFilterType filter_type;
-    GumboStringBuffer *name;
+    GumboStringBuffer name;
     XpathFilterOp op;
-    GumboStringBuffer *node;
+    GumboStringBuffer value;
 } XpathFilterNode;
 
 typedef struct {
     XpathFilterType seg_type;
     union {
-        GumboStringBuffer* node;
-        GumboStringBuffer* attr;
+        GumboStringBuffer node;
+        GumboStringBuffer attr;
     }
     XpathFilterNode filter;
     bool is_deep_search;
 } XpathSeg;
 
-void gumbo_create_xpath_seg();
+void gumbo_init_xpath_seg(GumboParser* parser, XpathFilterType seg_type, XpathSeg *seg);
 
-XpathFilterType gumbo_eval_xpath_from_root(GumboNode* root, const char *xpath);
+void gumbo_reset_xpath_seg(GumboParser* parser, XpathSeg *seg);
 
-XpathFilterType gumbo_eval_xpath_from_nodes(GumboVector *doc_nodes, const char *xpath);
+void gumbo_destroy_xpath_seg(GumboParser* parser, XpathSeg *seg);
+
+XpathFilterType gumbo_eval_xpath_from_root(GumboParser* parser, GumboNode* root, const char *xpath, GumboVector *output);
+
+XpathFilterType gumbo_eval_xpath_from_nodes(GumboParser* parser, GumboVector *doc_nodes, const char *xpath, GumboVector *output);
 
 #ifdef __cplusplus
 }
