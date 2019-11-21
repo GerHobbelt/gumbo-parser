@@ -4,6 +4,7 @@
 #define GUMBO_XPATH_EVAL_H_A
 
 #include <stdbool.h>
+#include "parser.h"
 #include "string_buffer.h"
 #include "vector.h"
 
@@ -14,42 +15,42 @@ extern "C" {
 #endif
 
 typedef enum {
-    DOC_NODE, DOC_NODE_ATTR
+    UNKNOWN, DOC_NODE, DOC_NODE_ATTR
 } XpathFilterType;
 
 typedef enum {
-    LE, LT, GE, GT, NE, EQ
-} XpathFilterOP;
+    NONE, LE, LT, GE, GT, NE, EQ
+} XpathFilterOp;
 
 typedef enum {
     IN_DOC_NODE_KEY,
     IN_DOC_NODE_VALUE,
-    IN_ATTR_KEY,
-    IN_ATTR_VALUE
+    IN_DOC_NODE_ATTR_KEY,
+    IN_DOC_NODE_ATTR_VALUE
 } XpathFilterState;
 
 typedef struct {
-    XpathFilterType filter_type;
+    XpathFilterType type;
     GumboStringBuffer name;
     XpathFilterOp op;
     GumboStringBuffer value;
 } XpathFilterNode;
 
 typedef struct {
-    XpathFilterType seg_type;
+    XpathFilterType type;
     union {
         GumboStringBuffer node;
         GumboStringBuffer attr;
-    }
+    };
     XpathFilterNode filter;
     bool is_deep_search;
 } XpathSeg;
 
-void gumbo_init_xpath_seg(GumboParser* parser, XpathFilterType seg_type, XpathSeg *seg);
+/*void gumbo_init_xpath_seg(GumboParser* parser, XpathFilterType type, XpathSeg *seg);
 
 void gumbo_reset_xpath_seg(GumboParser* parser, XpathSeg *seg);
 
-void gumbo_destroy_xpath_seg(GumboParser* parser, XpathSeg *seg);
+void gumbo_destroy_xpath_seg(GumboParser* parser, XpathSeg *seg);*/
 
 XpathFilterType gumbo_eval_xpath_from_root(GumboParser* parser, GumboNode* root, const char *xpath, GumboVector *output);
 

@@ -39,6 +39,20 @@ void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
   parser->_options->deallocator(parser->_options->userdata, ptr);
 }
 
+bool gumbo_is_positive_integer(const char *str, int len) {
+    int i = 0;
+    if (!str || len <= 0) {
+        return false;
+    } else {
+        for (i = 0; i < len; i++) {
+            if (str[i] > '9' || str[i] < '0') {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
 char* gumbo_copy_stringz(GumboParser* parser, const char* str) {
   char* buffer = gumbo_parser_allocate(parser, strlen(str) + 1);
   strcpy(buffer, str);

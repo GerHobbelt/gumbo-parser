@@ -72,7 +72,9 @@ libgumbo_la_SOURCES = \
 				src/util.c \
 				src/util.h \
 				src/vector.c \
-				src/vector.h
+				src/vector.h \
+                                src/xpath_eval.h \
+                                src/xpath_eval.c
 include_HEADERS = src/gumbo.h src/tag_enum.h
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -105,7 +107,7 @@ gumbo_test_DEPENDENCIES += check-local
 gumbo_test_LDADD += gtest/lib/libgtest.la gtest/lib/libgtest_main.la
 endif
 
-noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint
+noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint evalxpath
 LDADD = libgumbo.la
 AM_CPPFLAGS = -I"$(srcdir)/src"
 
@@ -116,3 +118,4 @@ positions_of_class_SOURCES = examples/positions_of_class.cc
 benchmark_SOURCES = benchmarks/benchmark.cc
 serialize_SOURCES = examples/serialize.cc
 prettyprint_SOURCES = examples/prettyprint.cc
+evalxpath_SOURCES = examples/eval_xpath.cc

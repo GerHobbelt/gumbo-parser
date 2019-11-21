@@ -49,6 +49,9 @@ void* gumbo_parser_allocate(
 // config options.
 void gumbo_parser_deallocate(struct GumboInternalParser* parser, void* ptr);
 
+// check whether the string is integer
+bool gumbo_is_positive_integer(const char *str, int len);
+
 // Debug wrapper for printf, to make it easier to turn off debugging info when
 // required.
 void gumbo_debug(const char* format, ...);
