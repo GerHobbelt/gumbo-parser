@@ -48,7 +48,8 @@ static void gumbo_push_child_node(GumboParser *parser, GumboNode *parent_node, G
     }
 }
 
-static void gumbo_eval_xpath_seg(GumboParser *parser, XpathSeg *seg, GumboVector *src_nodes, GumboVector *dst_nodes, bool is_last_seg) {
+static void gumbo_eval_xpath_seg(GumboParser *parser, XpathSeg *seg, GumboVector *src_nodes,
+    GumboVector *dst_nodes, bool is_last_seg) {
     GumboNode *src_node;
     GumboTag seg_node_tag = GUMBO_TAG_UNKNOWN;
     int i = 0;
@@ -74,7 +75,8 @@ static void gumbo_eval_xpath_seg(GumboParser *parser, XpathSeg *seg, GumboVector
                                     if (filter_node_tag != GUMBO_TAG_UNKNOWN) {
                                         for (i = 0; i < src_node->v.element.children.length;i++) {
                                             GumboNode *child_node = (GumboNode *)src_node->v.element.children.data[i];
-                                            if (child_node->type == GUMBO_NODE_ELEMENT && child_node->v.element.tag == filter_node_tag) {
+                                            if (child_node->type == GUMBO_NODE_ELEMENT 
+                                                && child_node->v.element.tag == filter_node_tag) {
                                                 node_filtered = src_node;
                                             }
                                         }
@@ -120,7 +122,14 @@ static void gumbo_eval_xpath_seg(GumboParser *parser, XpathSeg *seg, GumboVector
                     }
                 }
             } else {
-                
+                GumboVector attrs = src_node->v.element.attributes;
+                for (i = 0; i < attrs.length; i++) {
+                    GumboAttribute *attr = (GumboAttribute *)attrs.data[i];
+                    if (!strncmp(attr->name, seg->attr.data, seg->attr.length)) {
+                        gumbo_vector_add(parser, attr, dst_nodes);
+                        break;
+                    }
+                } 
             }
             if (seg->is_deep_search) {
                 gumbo_push_child_node(parser, src_node, src_nodes);
