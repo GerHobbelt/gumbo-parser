@@ -39,7 +39,24 @@ int main(int argc, char** argv) {
   GumboOutput* output = gumbo_parse_with_options(&kGumboDefaultOptions, input, input_length);
   GumboVector nodes = {0};
   gumbo_vector_init(&parser, DEFAULT_VECTOR_SIZE, &nodes);
-  gumbo_eval_xpath_from_root(&parser, output->root, xpathexpression, &nodes);
+  XpathFilterType ret_type = gumbo_eval_xpath_from_root(&parser, output->root, xpathexpression, &nodes);
+  GumboAttribute *attr;
+  if (ret_type == DOC_NODE) {
+      GumboNode *node;
+      while ((node = (GumboNode *)gumbo_vector_pop(&parser, &nodes)) != NULL) {
+          printf("%s\n", gumbo_normalized_tagname(node->v.element.tag));
+          GumboVector *attrs = &node->v.element.attributes;
+          printf("\t");
+          while ((attr = (GumboAttribute *)gumbo_vector_pop(&parser, attrs)) != NULL) {
+              printf(" %s=%s ", attr->name, attr->value);
+          }
+          printf("\n");
+      }
+  } else {
+      while ((attr = (GumboAttribute *)gumbo_vector_pop(&parser, &nodes)) != NULL) {
+          printf("%s=%s\n", attr->name, attr->value);
+      } 
+  }
   gumbo_vector_destroy(&parser, &nodes);
   gumbo_destroy_output(&kGumboDefaultOptions, output);
   free(input);
