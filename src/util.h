@@ -49,9 +49,6 @@ void* gumbo_parser_allocate(
 // config options.
 void gumbo_parser_deallocate(struct GumboInternalParser* parser, void* ptr);
 
-// check whether the string is integer
-bool gumbo_is_positive_integer(const char *str, int len);
-
 // translate string to positive integer
 bool gumbo_str_to_positive_integer(const char *str, int len, int *out);
 

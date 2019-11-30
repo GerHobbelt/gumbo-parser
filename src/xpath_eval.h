@@ -54,14 +54,6 @@ XpathFilterType gumbo_eval_xpath_from_root(GumboParser* parser, GumboNode* root,
 
 XpathFilterType gumbo_eval_xpath_from_nodes(GumboParser* parser, GumboVector *doc_nodes, const char *xpath, GumboVector *output);
 
-bool gumbo_compile_xpath(GumboParser* parser, const char *xpath, GumboVector *xpath_segs);
-
-XpathFilterType gumbo_eval_xpath_from_root(GumboParser* parser, GumboNode* root, GumboVector *xpath_segs, GumboVector *output);
-
-XpathFilterType gumbo_eval_xpath_from_nodes(GumboParser* parser, GumboVector *doc_nodes, GumboVector *xpath_segs, GumboVector *output);
-
-void gumbo_free_xpath_segs(GumboParser *parser, GumboVector *xpath_segs);
-
 #ifdef __cplusplus
 }
 #endif
