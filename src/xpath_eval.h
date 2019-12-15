@@ -23,7 +23,7 @@ typedef enum {
 } XpathFilterOp;
 
 typedef enum {
-    UNKNOWN_FILTER, NODE_INDEX, NODE_NUMERIC, NODE_STRING, ATTR_NUMERIC, ATTR_STRING, LEFT_BRACKETS, RIGHT_BRACKETS, AND, OR
+    UNKNOWN_FILTER, NODE_INDEX, NODE_NUMERIC, NODE_STRING, ATTR_NUMERIC, ATTR_STRING, LEFT_BRACKETS, RIGHT_BRACKETS, AND, OR, BOOL
 } XpathFilterType;
 
 typedef struct {
@@ -32,7 +32,8 @@ typedef struct {
     int index;
     XpathFilterOp op;
     GumboStringBuffer value;
-    double double_value;
+    double numeric_value;
+    bool bool_value;
 } XpathFilter;
 
 typedef struct {

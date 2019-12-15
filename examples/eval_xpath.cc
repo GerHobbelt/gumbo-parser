@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   GumboOutput* output = gumbo_parse_with_options(&kGumboDefaultOptions, input, input_length);
   GumboVector nodes = {0};
   gumbo_vector_init(&parser, DEFAULT_VECTOR_SIZE, &nodes);
-  XpathFilterType ret_type = gumbo_eval_xpath_from_root(&parser, output->document, xpathexpression, &nodes);
+  XpathSegType ret_type = gumbo_eval_xpath_from_root(&parser, output->root, xpathexpression, &nodes);
   GumboAttribute *attr;
   if (ret_type == DOC_NODE) {
       GumboNode *node;
