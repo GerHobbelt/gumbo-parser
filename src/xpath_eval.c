@@ -51,8 +51,10 @@ static XpathFilter *gumbo_new_xpath_filter(GumboParser *parser, XpathFilterType 
 }
 
 static void gumbo_free_xpath_filter(GumboParser *parser, XpathFilter *filter) {
-    gumbo_string_buffer_destroy(parser, &filter->name);
-    gumbo_string_buffer_destroy(parser, &filter->value);
+    if (filter->type < LEFT_BRACKETS) { 
+        gumbo_string_buffer_destroy(parser, &filter->name);
+        gumbo_string_buffer_destroy(parser, &filter->value);
+    }
     free(filter);
 }
 
@@ -283,9 +285,7 @@ static bool gumbo_is_filtered_ok(GumboParser *parser, XpathFilter *filters, int 
     int i = 0, j = 0, k = 0;
     XpathFilterType filter_type = OR;
     XpathFilter *filter;
-//printf("==============\n");
     for (i = 0; i < filter_num; i++) {
-//printf("%d,%d\n", filters[i].type, filters[i].bool_value);
         if (filters[i].type == RIGHT_BRACKETS) {
             for (j = i; j >= 0; j--) {
                 if (filters[j].type == LEFT_BRACKETS) {
@@ -312,15 +312,10 @@ static bool gumbo_is_filtered_ok(GumboParser *parser, XpathFilter *filters, int 
     return ret;
 }
 
-static void gumbo_print_node(GumboNode *node) {
-    printf("%s[id=%s]\n", gumbo_normalized_tagname(node->v.element.tag), gumbo_get_attribute(&node->v.element.attributes, "id")->value);
-}
-
 static XpathSegType gumbo_do_filter(GumboParser *parser, GumboVector *src_nodes, XpathSeg *seg, bool is_last_node_seg, GumboVector *dsts) {
     GumboNode *src_node;
     int i = 0, j = 0, filter_num = 0;
     while ((src_node = (GumboNode *)gumbo_vector_pop(parser, src_nodes)) != NULL) {
-//gumbo_print_node(src_node);
         if (seg->is_deep_search) {
             gumbo_push_child_node(parser, src_node, src_nodes);
         }
@@ -439,7 +434,6 @@ XpathSegType gumbo_eval_xpath_from_nodes(GumboParser* parser, GumboVector *doc_n
     XpathSeg *xpath_seg;
     gumbo_vector_init(parser, DEFAULT_VECTOR_SIZE, &xpath_segs);
     gumbo_compile_xpath(parser, xpath, &xpath_segs);
-//gumbo_dup_xpath_segs(&xpath_segs);
     int i = 0;
     for (i = 0; i < xpath_segs.length; i++) {
         xpath_seg = xpath_segs.data[i];
