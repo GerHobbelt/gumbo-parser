@@ -5,7 +5,7 @@
 
 #include "vector.h"
 #include "util.h"
-#include "xpath_eval.h"
+#include "xpath.h"
 
 #define CONFIRM_DOC_NODE(x, y) \
     do { \
