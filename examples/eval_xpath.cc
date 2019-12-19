@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "xpath_eval.h"
+#include "xpath.h"
 
 static void read_file(FILE* fp, char** output, int* length) {
   struct stat filestats;
