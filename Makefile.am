@@ -73,8 +73,8 @@ libgumbo_la_SOURCES = \
 				src/util.h \
 				src/vector.c \
 				src/vector.h \
-                                src/xpath_eval.h \
-                                src/xpath_eval.c
+                src/xpath.h \
+                src/xpath.c
 include_HEADERS = src/gumbo.h src/tag_enum.h src/vector.h src/xpath.h src/parser.h src/string_buffer.h
 
 pkgconfigdir = $(libdir)/pkgconfig
