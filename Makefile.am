@@ -107,7 +107,7 @@ gumbo_test_DEPENDENCIES += check-local
 gumbo_test_LDADD += gtest/lib/libgtest.la gtest/lib/libgtest_main.la
 endif
 
-noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint
+noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint print
 LDADD = libgumbo.la
 AM_CPPFLAGS = -I"$(srcdir)/src"
 
@@ -118,3 +118,4 @@ positions_of_class_SOURCES = examples/positions_of_class.cc
 benchmark_SOURCES = benchmarks/benchmark.cc
 serialize_SOURCES = examples/serialize.cc
 prettyprint_SOURCES = examples/prettyprint.cc
+print_SOURCES = tools/print.cc
