@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#if defined(_MSC_VER)
+#include <crtdbg.h>
+#endif
 
 #include "attribute.h"
 #include "error.h"
@@ -575,7 +578,7 @@ static GumboInsertionMode get_appropriate_insertion_mode(
   if (node->v.element.tag_namespace != GUMBO_NAMESPACE_HTML)
     return is_last ?
       GUMBO_INSERTION_MODE_IN_BODY : GUMBO_INSERTION_MODE_INITIAL;
-  
+
   switch (node->v.element.tag) {
     case GUMBO_TAG_SELECT: {
       if (is_last) {
