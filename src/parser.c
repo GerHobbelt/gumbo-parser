@@ -4168,6 +4168,26 @@ GumboOutput* gumbo_parse_with_options(
     doc_type->system_identifier = gumbo_copy_stringz(&parser, "");
   }
 
+  // Collect the parse eerrors in a user-usable form in the output struct:
+  int err_count = gumbo_vector_size(&parser, &parser._output->errors);
+  if (err_count) {
+    parser._output->error_messages = gumbo_parser_allocate(
+        &parser, (err_count + 1) * sizeof(parser._output->error_messages[0]));
+
+    int i;
+    for (i = 0; i < err_count; i++) {
+      GumboError* error =
+          gumbo_vector_get_at_index(&parser, &parser._output->errors, i);
+      GumboStringBuffer errbuf;
+      gumbo_string_buffer_init(&parser, &errbuf);
+      gumbo_error_to_string(&parser, error, &errbuf);
+      parser._output->error_messages[i] =
+          gumbo_string_buffer_to_string(&parser, &errbuf);
+      gumbo_string_buffer_destroy(&parser, &errbuf);
+    }
+    parser._output->error_messages[i] = NULL; // sentinel
+  }
+
   parser_state_destroy(&parser);
   gumbo_tokenizer_state_destroy(&parser);
   return parser._output;
@@ -4191,5 +4211,16 @@ void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
     gumbo_error_destroy(&parser, output->errors.data[i]);
   }
   gumbo_vector_destroy(&parser, &output->errors);
+
+  if (output->error_messages) {
+    const char* errmsg;
+    int i = 0;
+    do {
+      errmsg = output->error_messages[i++];
+      if (errmsg) gumbo_parser_deallocate(&parser, (void *)errmsg);
+    } while (errmsg);
+    gumbo_parser_deallocate(&parser, (void *)output->error_messages);
+  }
+
   gumbo_parser_deallocate(&parser, output);
 }

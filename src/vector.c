@@ -82,6 +82,20 @@ void* gumbo_vector_pop(
   return vector->data[--vector->length];
 }
 
+void* gumbo_vector_get_at_index(
+    struct GumboInternalParser* parser, GumboVector* vector, int index) {
+  if (vector->length == 0 || vector->length <= index) {
+    return NULL;
+  }
+
+  return vector->data[index];
+}
+
+int gumbo_vector_size(
+    struct GumboInternalParser* parser, GumboVector* vector) {
+  return vector ? vector->length : 0;
+}
+
 int gumbo_vector_index_of(GumboVector* vector, const void* element) {
   for (unsigned int i = 0; i < vector->length; ++i) {
     if (vector->data[i] == element) {

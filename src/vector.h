@@ -45,6 +45,12 @@ void gumbo_vector_add(
 // empty, NULL is returned.
 void* gumbo_vector_pop(struct GumboInternalParser* parser, GumboVector* vector);
 
+// Return the element at index or NULL when the index is out of bounds or the vector is empty.
+void* gumbo_vector_get_at_index(struct GumboInternalParser* parser, GumboVector* vector, int index);
+
+// Return the current size of the vector (0 or more)
+int gumbo_vector_size(struct GumboInternalParser* parser, GumboVector* vector);
+
 // Inserts an element at a specific index.  This is potentially O(N) time, but
 // is necessary for some of the spec's behavior.
 void gumbo_vector_insert_at(struct GumboInternalParser* parser, void* element,

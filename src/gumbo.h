@@ -639,12 +639,18 @@ typedef struct GumboInternalOutput {
 
   /**
    * A list of errors that occurred during the parse.
+   * 
    * NOTE: In version 1.0 of this library, the API for errors hasn't been fully
    * fleshed out and may change in the future.  For this reason, the GumboError
    * header isn't part of the public API.  Contact us if you need errors
    * reported so we can work out something appropriate for your use-case.
    */
   GumboVector /* GumboError */ errors;
+
+  /**
+   * A list of error messages that occurred during the parse.
+   */
+  const char **error_messages;
 } GumboOutput;
 
 /**
