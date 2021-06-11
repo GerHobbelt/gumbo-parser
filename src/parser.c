@@ -310,7 +310,7 @@ static const NamespacedAttributeReplacement kForeignAttributeReplacements[] = {
 // The "scope marker" for the list of active formatting elements.  We use a
 // pointer to this as a generic marker element, since the particular element
 // scope doesn't matter.
-static const GumboNode kActiveFormattingScopeMarker;
+static const GumboNode kActiveFormattingScopeMarker = { 0 };
 
 // The tag_is and tag_in function use true & false to denote start & end tags,
 // but for readability, we define constants for them here.
