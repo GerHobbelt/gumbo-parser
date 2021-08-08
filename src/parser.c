@@ -2258,7 +2258,6 @@ static bool handle_in_head(GumboParser* parser, GumboToken* token) {
     parser->_parser_state->_reprocess_current_token = true;
     return true;
   }
-  return true;
 }
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#parsing-main-inheadnoscript
