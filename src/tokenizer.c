@@ -371,7 +371,7 @@ static void append_char_to_temporary_buffer(
 
 // Checks to see if the temporary buffer equals a certain string.
 // Make sure this remains side-effect free; it's used in assertions.
-#ifndef NDEBUG
+#if !defined(NO_ASSERTIONS)
 static bool temporary_buffer_equals(GumboParser* parser, const char* text) {
   GumboStringBuffer* buffer = &parser->_tokenizer_state->_temporary_buffer;
   // TODO(jdtang): See if the extra strlen is a performance problem, and replace
