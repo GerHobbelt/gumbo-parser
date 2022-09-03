@@ -4170,7 +4170,7 @@ GumboOutput* gumbo_parse_with_options(
     doc_type->system_identifier = gumbo_copy_stringz(&parser, "");
   }
 
-  // Collect the parse eerrors in a user-usable form in the output struct:
+  // Collect the parse errors in a user-usable form in the output struct:
   int err_count = gumbo_vector_size(&parser, &parser._output->errors);
   if (err_count) {
     parser._output->error_messages = gumbo_parser_allocate(
