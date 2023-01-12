@@ -261,7 +261,11 @@ static std::string print(GumboNode* node) {
 }
 
 
-int main(int argc, char** argv) {
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_print_main
+#endif
+
+int main(int argc, const char** argv) {
   char buffer[4096];
   std::string contents;
   while (!feof(stdin)) {

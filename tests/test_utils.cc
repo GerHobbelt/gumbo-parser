@@ -81,7 +81,7 @@ void GetAndAssertBody(GumboNode* root, GumboNode** body) {
       *body = child;
       EXPECT_EQ(GUMBO_TAG_BODY, GetTag(*body));
     } else {
-      ASSERT_TRUE("More than two elements found inside <html>" != NULL);
+      ASSERT_TRUE(!"More than two elements found inside <html>");
     }
   }
   EXPECT_TRUE(head != NULL);
