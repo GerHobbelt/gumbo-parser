@@ -217,7 +217,11 @@ void gumbo_error_to_string(
     case GUMBO_ERR_UNACKNOWLEDGED_SELF_CLOSING_TAG:
       handle_parser_error(parser, &error->v.parser, output);
       break;
-    default:
+	case GUMBO_ERR_TAG_STARTS_WITH_QUESTION:
+      print_message(parser, output,
+          "Tag starts with a '?' question mark: are you perchance parsing XML instead of HTML?");
+	  break;
+	default:
       print_message(parser, output,
           "Tokenizer error with an unimplemented error message");
       break;
