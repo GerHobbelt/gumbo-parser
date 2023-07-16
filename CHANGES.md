@@ -1,3 +1,9 @@
+## Gumbo 0.11.0 (2023-07-16)
+
+* Add support for `<picture>` tag
+* Make `genperf.py` script compatible with Python 3
+* Change maintainer to Grigory Kirillov (txgk@bk.ru)
+
 ## Gumbo 0.10.1 (2015-04-30)
 
 Same as 0.10.0, but with the version number bumped because the last version-number commit to v0.9.4 makes GitHub think that v0.9.4 is the latest version and so it's not highlighted on the webpage.
