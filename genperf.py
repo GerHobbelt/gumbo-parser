@@ -23,8 +23,8 @@ def process_wordlist(text):
         for w in wordlist]
     return taglist
 
-print "static unsigned int tag_hash(%s)\n{%s\n}" % (
-        hash_func.group(1), hash_func.group(2))
-print ""
-print "static const unsigned char kGumboTagMap[] = {\n%s\n};" % (
-        ',\n'.join(process_wordlist(wordlist.group(1))))
+print("static unsigned int tag_hash(%s)\n{%s\n}" % (
+    hash_func.group(1), hash_func.group(2)))
+print("")
+print("static const unsigned char kGumboTagMap[] = {\n%s\n};" % (
+    ',\n'.join(process_wordlist(wordlist.group(1)))))
