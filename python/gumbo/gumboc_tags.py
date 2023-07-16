@@ -74,6 +74,7 @@ TagNames = [
   "DEL",
   "IMAGE",
   "IMG",
+  "PICTURE",
   "IFRAME",
   "EMBED",
   "OBJECT",

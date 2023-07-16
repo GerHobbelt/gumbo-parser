@@ -73,6 +73,7 @@
 "del",
 "image",
 "img",
+"picture",
 "iframe",
 "embed",
 "object",

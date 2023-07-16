@@ -51,8 +51,13 @@ class GumboTokenizerTest : public GumboTest {
   GumboToken token_;
 };
 
+TEST(GumboTagEnumTest, TagEnumIncludesAllTags) {
+  EXPECT_EQ(151, GUMBO_TAG_UNKNOWN);
+  EXPECT_STREQ("", kGumboTagNames[GUMBO_TAG_UNKNOWN]);
+}
+
 TEST_F(GumboTokenizerTest, TagEnumIncludesAllTags) {
-  EXPECT_EQ(150, GUMBO_TAG_UNKNOWN);
+  EXPECT_EQ(151, GUMBO_TAG_UNKNOWN);
 
   auto kGumboTagNames = getGumboTagNamesList();
   EXPECT_STREQ("", kGumboTagNames[GUMBO_TAG_UNKNOWN]);
