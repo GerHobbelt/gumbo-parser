@@ -5,9 +5,13 @@ Gumbo - A pure-C HTML5 parser.
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser?ref=badge_shield)
 
 Gumbo is an implementation of the [HTML5 parsing algorithm][] implemented
-as a pure C99 library with no outside dependencies.  It's designed to serve
+as a pure C99 library with no outside dependencies. It's designed to serve
 as a building block for other tools and libraries such as linters,
 validators, templating languages, and refactoring and analysis tools.
+
+This repository is a fork of [original GitHub repository][] which has been
+archived by the owner on Feb 16, 2023 and is no longer maintained.
+
 
 Goals & features:
 
@@ -224,6 +228,7 @@ various contributors in other repositories:
 [gumbo-libxml]: https://github.com/nostrademons/gumbo-libxml
 
 [HTML5 parsing algorithm]: http://www.whatwg.org/specs/web-apps/current-work/multipage/#auto-toc-12
+[original GitHub repository]: https://github.com/google/gumbo-parser
 [HTML5 spec]: http://www.whatwg.org/specs/web-apps/current-work/multipage/
 [html5lib tests]: https://github.com/html5lib/html5lib-tests
 [googletest]: https://code.google.com/p/googletest/
@@ -233,5 +238,6 @@ various contributors in other repositories:
 A fork of the unmaintained original is available at [https://codeberg.org/gumbo-parser/gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser).
 
 ## License
+
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser?ref=badge_large)
 
