@@ -55,7 +55,7 @@ endif
 
 lib_LTLIBRARIES = libgumbo.la
 libgumbo_la_CFLAGS = -Wall
-libgumbo_la_LDFLAGS = -version-info 1:0:0 -no-undefined
+libgumbo_la_LDFLAGS = -version-info ${gumbo_version_info} -no-undefined
 libgumbo_la_SOURCES = \
 				src/attribute.c \
 				src/attribute.h \
