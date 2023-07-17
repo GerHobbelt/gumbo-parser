@@ -1,3 +1,10 @@
+## Gumbo 0.12.0 (2023-07-18)
+
+* Add support for `<dialog>` tag
+* Fix `TAGSET_INCLUDES` macro to work properly with multiple bit flags ([17ab1d2@lua-gumbo](https://github.com/craigbarnes/lua-gumbo/commit/17ab1d2b4c4742da78c0c8b3329f61a95744c895))
+* Avoid potential crash for zero length tags ([01359a9@nokogiri](https://github.com/sparklemotion/nokogiri/commit/01359a951e6c43bd975dfdb1fa80c01d32cc77d2))
+* Bump shared library version
+
 ## Gumbo 0.11.0 (2023-07-16)
 
 * Add support for `<picture>` tag
