@@ -50,7 +50,7 @@ typedef char gumbo_tagset[GUMBO_TAG_LAST];
 #define TAG_MATHML(tag) [GUMBO_TAG_##tag] = (1 << GUMBO_NAMESPACE_MATHML)
 
 #define TAGSET_INCLUDES(tagset, ns, tag) ( \
-  tag < GUMBO_TAG_LAST \
+  (tag < GUMBO_TAG_LAST) \
   && (tagset[(int) tag] & (1 << (int) ns)) \
 )
 
