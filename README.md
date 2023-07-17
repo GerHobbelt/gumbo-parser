@@ -39,14 +39,6 @@ Non-goals:
   we recommend translating the Gumbo parse tree into a mutable DOM
   representation more suited for the particular needs of your program before
   operating on it.
-* C89 support.  Most major compilers support C99 by now; the major exception
-  (Microsoft Visual Studio) should be able to compile this in C++ mode with
-  relatively few changes.  (Bug reports welcome.)
-* ~~Security.  Gumbo was initially designed for a product that worked with
-  trusted input files only.  We're working to harden this and make sure that it
-  behaves as expected even on malicious input, but for now, Gumbo should only be
-  run on trusted input or within a sandbox.~~ Gumbo underwent a number of
-  security fixes and passed Google's security review as of version 0.9.1.
 
 Wishlist (aka "We couldn't get these into the original release, but are
 hoping to add them soon"):
