@@ -52,7 +52,7 @@ class GumboTokenizerTest : public GumboTest {
 };
 
 TEST(GumboTagEnumTest, TagEnumIncludesAllTags) {
-  EXPECT_EQ(151, GUMBO_TAG_UNKNOWN);
+  EXPECT_EQ(152, GUMBO_TAG_UNKNOWN);
   EXPECT_STREQ("", kGumboTagNames[GUMBO_TAG_UNKNOWN]);
 }
 

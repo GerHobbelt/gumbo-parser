@@ -150,5 +150,6 @@
 "multicol",
 "nobr",
 "spacer",
+"dialog",
 "tt",
 "rtc",
