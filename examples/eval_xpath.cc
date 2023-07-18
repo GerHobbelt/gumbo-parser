@@ -25,13 +25,13 @@ static void read_file(FILE* fp, char** output, int* length) {
 int main(int argc, const char** argv) {
   if (argc != 3) {
       printf("evalxpath <html filename> <xpathexpression>\n");
-      exit(EXIT_FAILURE);
+      return EXIT_FAILURE;
   }
   const char* filename = argv[1];
   FILE* fp = fopen(filename, "r");
   if (!fp) {
     printf("File %s not found!\n", filename);
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   const char* xpathexpression = argv[2];
 
@@ -64,5 +64,5 @@ int main(int argc, const char** argv) {
   gumbo_vector_destroy(&parser, &nodes);
   gumbo_destroy_output(&kGumboDefaultOptions, output);
   free(input);
-  return 0;
+  return EXIT_SUCCESS;
 }
