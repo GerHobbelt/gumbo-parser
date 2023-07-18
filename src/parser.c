@@ -1593,8 +1593,7 @@ static bool is_special_node(const GumboNode* node) {
 }
 
 // Implicitly closes currently open elements until it reaches an element with
-// the
-// specified qualified name.  If the elements closed are in the set handled by
+// the specified qualified name.  If the elements closed are in the set handled by
 // generate_implied_end_tags, this is normal operation and this function returns
 // true.  Otherwise, a parse error is recorded and this function returns false.
 static bool implicitly_close_tags(GumboParser* parser, GumboToken* token,
@@ -2665,7 +2664,7 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
         ;
       return success;
     } else {
-      const GumboNode* node = state->_form_element;
+      GumboNode* node = state->_form_element;
       assert(!node || node->type == GUMBO_NODE_ELEMENT);
       state->_form_element = NULL;
       if (!node || !has_node_in_scope(parser, node)) {
@@ -2675,9 +2674,24 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
         return false;
       }
       // Retrieve <form> element by using implicitly_close_tags rather than
-      // generate_implied_end_tags(parser, GUMBO_TAG_LAST);
+#if 0
+      generate_implied_end_tags(parser, GUMBO_TAG_LAST);
+      if (get_current_node(parser) == node) {
+        record_end_of_element(token, &node->v.element);
+      } else {
+        parser_add_parse_error(parser, token);
+        result = false;
+      }
+
+      GumboVector* open_elements = &state->_open_elements;
+      int index = gumbo_vector_index_of(open_elements, node);
+      assert(index >= 0);
+      gumbo_vector_remove_at(parser, index, open_elements);
+      return result;
+#else
 	  return implicitly_close_tags(
 		  parser, token, GUMBO_NAMESPACE_HTML, GUMBO_TAG_FORM);
+#endif
     }
   } else if (tag_is(token, kEndTag, GUMBO_TAG_P)) {
     if (!has_an_element_in_button_scope(parser, GUMBO_TAG_P)) {
