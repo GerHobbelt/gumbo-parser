@@ -19,7 +19,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
+#include "string_util.h"
 #if defined(_MSC_VER)
 #ifndef _CRTDBG_MAP_ALLOC
 #define _CRTDBG_MAP_ALLOC
