@@ -541,6 +541,21 @@ struct GumboInternalNode {
   } v;
 };
 
+
+// See https://github.com/google/gumbo-parser/issues/387
+// recursive destroy_node can cause staock overrun
+
+/**
+ * The type for a tree traversal callback.
+ */
+typedef size_t (*gumbo_tree_iter_callback)(void* userdata, GumboNode* node);
+
+/**
+ * GumboNode tree traversal with callback `cb` for each child of `node` and 
+ * for `node` itself, passing it the node and `userdata` as arguments.
+ */
+size_t gumbo_tree_traverse(GumboNode* node, void* userdata, gumbo_tree_iter_callback cb);
+
 /**
  * The type for an allocator function.  Takes the 'userdata' member of the
  * GumboParser struct as its first argument.  Semantics should be the same as
@@ -592,7 +607,7 @@ typedef struct GumboInternalOptions {
    * is provided so that if the page is totally borked, we don't completely fill
    * up the errors vector and exhaust memory with useless redundant errors.  Set
    * to -1 to disable the limit.
-   * Default: -1
+   * Default: 50
    */
   int max_errors;
 

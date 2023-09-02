@@ -1,4 +1,4 @@
-// Copyright 2015 Kevin B. Hendricks, Stratford, Ontario,  All Rights Reserved.
+// Copyright 2015-2017 Kevin B. Hendricks, Stratford, Ontario,  All Rights Reserved.
 // loosely based on a greatly simplified version of BeautifulSoup4 decode() routine
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,25 +21,58 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string>
+#include <unordered_set>
 
 #include "gumbo.h"
 
-static std::string nonbreaking_inline  = "|a|abbr|acronym|b|bdo|big|cite|code|dfn|em|font|i|img|kbd|nobr|s|small|span|strike|strong|sub|sup|tt|";
-static std::string empty_tags          = "|area|base|basefont|bgsound|br|command|col|embed|event-source|frame|hr|image|img|input|keygen|link|menuitem|meta|param|source|spacer|track|wbr|";
-static std::string preserve_whitespace = "|pre|textarea|script|style|";
-static std::string special_handling    = "|html|body|";
-static std::string no_entity_sub       = "|script|style|";
+static std::unordered_set<std::string> nonbreaking_inline  = { 
+  "a","abbr","acronym","b","bdo","big","br","button","cite","code","del",
+  "dfn","em","font","i","image","img","input","ins","kbd","label","map",
+  "nobr","object","q","ruby","rt","s","samp","select","small","span",
+  "strike","strong","sub","sup","textarea","tt","u","var","wbr"
+};
 
+
+static std::unordered_set<std::string> preserve_whitespace = {
+  "pre","textarea","script","style"
+};
+
+
+static std::unordered_set<std::string> special_handling    = { 
+  "html","body"
+};
+
+
+static std::unordered_set<std::string> no_entity_sub       = {
+  "script","style"
+};
+
+
+static std::unordered_set<std::string> void_tags          = {
+  "area","base","basefont","bgsound","br","command","col","embed",
+  "event-source","frame","hr","img","input","keygen","link",
+  "menuitem","meta","param","source","spacer","track","wbr"
+};
+
+
+static inline bool in_set(std::unordered_set<std::string> &s, std::string &key)
+{
+  return s.find(key) != s.end();
+}
+
+
+// These need to match the GumboAttributeNamespaceEnum sequence
+static const char * attribute_nsprefixes[4] = { "", "xlink:", "xml:", "xmlns:" };
 
 static inline void rtrim(std::string &s) 
 {
-  s.erase(s.find_last_not_of(" \n\r\t")+1);
+  s.erase(s.find_last_not_of(" \n\r\t\v\f")+1);
 }
 
 
 static inline void ltrim(std::string &s)
 {
-  s.erase(0,s.find_first_not_of(" \n\r\t"));
+  s.erase(0,s.find_first_not_of(" \n\r\t\v\f"));
 }
 
 
@@ -78,33 +111,40 @@ static std::string substitute_xml_entities_into_attributes(char quote, const std
  return result;
 }
 
-
-static std::string handle_unknown_tag(GumboStringPiece *text)
-{
-  std::string tagname = "";
-  if (text->data == NULL) {
-    return tagname;
-  }
-  // work with copy GumboStringPiece to prevent asserts 
-  // if try to read same unknown tag name more than once
-  GumboStringPiece gsp = *text;
-  gumbo_tag_from_original_text(&gsp);
-  tagname = std::string(gsp.data, gsp.length);
-  return tagname; 
-}
-
-
 static std::string get_tag_name(GumboNode *node)
 {
   std::string tagname;
-  // work around lack of proper name for document node
   if (node->type == GUMBO_NODE_DOCUMENT) {
-    tagname = "document";
-  } else {
-    tagname = gumbo_normalized_tagname(node->v.element.tag);
+    tagname = "#document";
+    return tagname;
+  } else if ((node->type == GUMBO_NODE_TEXT) || (node->type == GUMBO_NODE_WHITESPACE)) {
+    tagname = "#text";
+    return tagname;
+  } else if (node->type == GUMBO_NODE_CDATA) {
+    tagname = "#cdata";
+    return tagname;
   }
-  if (tagname.empty()) {
-    tagname = handle_unknown_tag(&node->v.element.original_tag);
+  tagname = gumbo_normalized_tagname(node->v.element.tag);
+  if ((tagname.empty()) ||
+      (node->v.element.tag_namespace == GUMBO_NAMESPACE_SVG)) {
+
+    // set up to examine original text of tag.
+    GumboStringPiece gsp = node->v.element.original_tag;
+    gumbo_tag_from_original_text(&gsp);
+
+    // special handling for some svg tag names.
+    if (node->v.element.tag_namespace  == GUMBO_NAMESPACE_SVG) {
+      const char * data = gumbo_normalize_svg_tagname(&gsp);
+      // NOTE: data may not be null-terminated!
+      // since case change only - length must be same as original.
+      // if no replacement found returns null, not original tag!
+      if (data != NULL) {
+        return std::string(data, gsp.length);
+      }
+    }
+    if (tagname.empty()) {
+      return std::string(gsp.data, gsp.length);
+    }
   }
   return tagname;
 }
@@ -120,7 +160,7 @@ static std::string build_doctype(GumboNode *node)
     if ((node->v.document.public_identifier != NULL) && !pi.empty() ) {
         results.append(" PUBLIC \"");
         results.append(node->v.document.public_identifier);
-        results.append("\" \"");
+        results.append("\"\n    \"");
         results.append(node->v.document.system_identifier);
         results.append("\"");
     }
@@ -129,33 +169,51 @@ static std::string build_doctype(GumboNode *node)
   return results;
 }
 
+// handle the known foreign attribute namespaces
+static std::string get_attribute_name(GumboAttribute * at)
+{
+  std::string attr_name = at->name;
+  GumboAttributeNamespaceEnum attr_ns = at->attr_namespace;
+  if ((attr_ns == GUMBO_ATTR_NAMESPACE_NONE) || (attr_name == "xmlns")) {
+    return attr_name;
+  } 
+  attr_name = std::string(attribute_nsprefixes[attr_ns]) + attr_name;
+  return attr_name;
+}
+
 
 static std::string build_attributes(GumboAttribute * at, bool no_entities)
 {
   std::string atts = " ";
-  atts.append(at->name);
+  std::string name = get_attribute_name(at);
+  atts.append(name);
+  std::string attvalue = at->value;
 
   // how do we want to handle attributes with empty values
   // <input type="checkbox" checked />  or <input type="checkbox" checked="" /> 
+  // for now we handle empty attribute values like so: alt=""
 
-  if ( (!std::string(at->value).empty())   || 
+  char quote = '"';
+  std::string qs="\"";
+
+  if ( (!attvalue.empty())   || 
        (at->original_value.data[0] == '"') || 
        (at->original_value.data[0] == '\'') ) {
 
     // determine original quote character used if it exists
-    char quote = at->original_value.data[0];
-    std::string qs = "";
+    quote = at->original_value.data[0];
     if (quote == '\'') qs = std::string("'");
     if (quote == '"') qs = std::string("\"");
-    atts.append("=");
-    atts.append(qs);
-    if (no_entities) {
-      atts.append(at->value);
-    } else {
-      atts.append(substitute_xml_entities_into_attributes(quote, std::string(at->value)));
-    }
-    atts.append(qs);
   }
+
+  atts.append("=");
+  atts.append(qs);
+  if (no_entities) {
+    atts.append(attvalue);
+  } else {
+    atts.append(substitute_xml_entities_into_attributes(quote, attvalue));
+  }
+  atts.append(qs);
   return atts;
 }
 
@@ -170,10 +228,9 @@ static std::string serialize(GumboNode*);
 static std::string serialize_contents(GumboNode* node) {
   std::string contents        = "";
   std::string tagname         = get_tag_name(node);
-  std::string key             = "|" + tagname + "|";
-  bool no_entity_substitution = no_entity_sub.find(key) != std::string::npos;
-  bool keep_whitespace        = preserve_whitespace.find(key) != std::string::npos;
-  bool is_inline              = nonbreaking_inline.find(key) != std::string::npos;
+  bool no_entity_substitution = in_set(no_entity_sub, tagname);
+  bool keep_whitespace        = in_set(preserve_whitespace, tagname);
+  bool is_inline              = in_set(nonbreaking_inline, tagname);
 
   // build up result for each child, recursively if need be
   GumboVector* children = &node->v.element.children;
@@ -195,8 +252,13 @@ static std::string serialize_contents(GumboNode* node) {
       // keep all whitespace to keep as close to original as possible
       contents.append(std::string(child->v.text.text));
 
-    } else if (child->type != GUMBO_NODE_COMMENT) {
-      // Does this actually exist: (child->type == GUMBO_NODE_CDATA)
+    } else if (child->type == GUMBO_NODE_CDATA) {
+      contents.append("<![CDATA[" + std::string(child->v.text.text) + "]]>");
+
+    } else if (child->type == GUMBO_NODE_COMMENT) {
+      contents.append("<!--" + std::string(child->v.text.text) + "-->");
+
+    } else {
       fprintf(stderr, "unknown element of type: %d\n", child->type); 
     }
   }
@@ -219,11 +281,9 @@ static std::string serialize(GumboNode* node) {
   std::string closeTag = "";
   std::string atts = "";
   std::string tagname            = get_tag_name(node);
-  std::string key                = "|" + tagname + "|";
-  bool need_special_handling     =  special_handling.find(key) != std::string::npos;
-  bool is_empty_tag              = empty_tags.find(key) != std::string::npos;
-  bool no_entity_substitution    = no_entity_sub.find(key) != std::string::npos;
-  bool is_inline                 = nonbreaking_inline.find(key) != std::string::npos;
+  bool need_special_handling     = in_set(special_handling, tagname);
+  bool is_void_tag              = in_set(void_tags, tagname);
+  bool no_entity_substitution    = in_set(no_entity_sub, tagname);
 
   // build attr string  
   const GumboVector * attribs = &node->v.element.attributes;
@@ -233,7 +293,7 @@ static std::string serialize(GumboNode* node) {
   }
 
   // determine closing tag type
-  if (is_empty_tag) {
+  if (is_void_tag) {
       close = "/";
   } else {
       closeTag = "</" + tagname + ">";
@@ -287,7 +347,7 @@ int main(int argc, const char** argv) {
 
   GumboOutput* output = gumbo_parse_with_options(&options, contents.data(), contents.length());
   std::cout << serialize(output->document) << std::endl;
-  gumbo_destroy_output(&kGumboDefaultOptions, output);
+  gumbo_destroy_output(&options, output);
 
   return EXIT_SUCCESS;
 }

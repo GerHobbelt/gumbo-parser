@@ -51,6 +51,22 @@ void* gumbo_parser_allocate(
 // config options.
 void gumbo_parser_deallocate(struct GumboInternalParser* parser, void* ptr);
 
+// non-locale specific replacements for ctype.h functions needed for spec
+static inline int gumbo_tolower(int c)
+{
+  return c | ((c >= 'A' && c <= 'Z') << 5);
+}
+
+static inline bool gumbo_isalpha(int c)
+{
+  return (c | 0x20) >= 'a' && (c | 0x20) <= 'z';
+}
+
+bool gumbo_isspace(unsigned char ch);
+
+bool gumbo_isalnum(unsigned char ch);
+
+
 // Debug wrapper for printf, to make it easier to turn off debugging info when
 // required.
 void gumbo_debug(const char* format, ...);

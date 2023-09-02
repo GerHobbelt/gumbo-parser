@@ -15,9 +15,8 @@
 // Author: jdtang@google.com (Jonathan Tang)
 
 #include "gumbo.h"
-
+#include "util.h"
 #include <assert.h>
-#include <ctype.h>
 #include <string.h>
 
 const char* kGumboTagNames[] = {
@@ -59,6 +58,8 @@ void gumbo_tag_from_original_text(GumboStringPiece* text) {
     // accepted by the Tag Name State
     for (const char* c = text->data; c != text->data + text->length; ++c) {
       if (*c == '\t' || *c == '\n' || *c == '\f' || *c == ' ' || *c == '/') {
+        // was: if (isspace(*c) || *c == '/') {
+        // see https://github.com/google/gumbo-parser/pull/375/
         text->length = c - text->data;
         break;
       }
@@ -68,8 +69,9 @@ void gumbo_tag_from_original_text(GumboStringPiece* text) {
 
 static int case_memcmp(const char* s1, const char* s2, unsigned int n) {
   while (n--) {
-    unsigned char c1 = tolower(*s1++);
-    unsigned char c2 = tolower(*s2++);
+    // need non-locale dependent tolower see https://github.com/google/gumbo-parser/pull/386
+    unsigned char c1 = gumbo_tolower(*s1++);
+    unsigned char c2 = gumbo_tolower(*s2++);
     if (c1 != c2) return (int) c1 - (int) c2;
   }
   return 0;

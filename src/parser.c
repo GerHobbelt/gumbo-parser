@@ -15,7 +15,6 @@
 // Author: jdtang@google.com (Jonathan Tang)
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,8 +49,10 @@ typedef char gumbo_tagset[GUMBO_TAG_LAST];
 #define TAG_SVG(tag) [GUMBO_TAG_##tag] = (1 << GUMBO_NAMESPACE_SVG)
 #define TAG_MATHML(tag) [GUMBO_TAG_##tag] = (1 << GUMBO_NAMESPACE_MATHML)
 
-#define TAGSET_INCLUDES(tagset, namespace, tag) \
-  (tag < GUMBO_TAG_LAST && tagset[(int) tag] == (1 << (int) namespace))
+#define TAGSET_INCLUDES(tagset, ns, tag) ( \
+  tag < GUMBO_TAG_LAST \
+  && (tagset[(int) tag] & (1 << (int) ns)) \
+)
 
 // selected forward declarations as it is getting hard to find
 // an appropriate order
@@ -65,8 +66,11 @@ static void* malloc_wrapper(void* unused, size_t size) { return malloc(size); }
 
 static void free_wrapper(void* unused, void* ptr) { free(ptr); }
 
+// Set kDefaultGumboOptions field max_errors to default to 50 (not -1) to 
+// prevent Quadratic time and memory use with many unclosed tags
+// https://github.com/google/gumbo-parser/issues/391
 const GumboOptions kGumboDefaultOptions = {&malloc_wrapper, &free_wrapper, NULL,
-    8, false, -1, GUMBO_TAG_LAST, GUMBO_NAMESPACE_HTML};
+    8, false, 50, GUMBO_TAG_LAST, GUMBO_NAMESPACE_HTML};
 
 static const GumboStringPiece kDoctypeHtml = GUMBO_STRING("html");
 static const GumboStringPiece kPublicIdHtml4_0 =
@@ -1581,12 +1585,22 @@ static bool is_special_node(const GumboNode* node) {
           TAG(PARAM), TAG(PLAINTEXT), TAG(PRE), TAG(SCRIPT), TAG(SECTION),
           TAG(SELECT), TAG(STYLE), TAG(SUMMARY), TAG(TABLE), TAG(TBODY),
           TAG(TD), TAG(TEMPLATE), TAG(TEXTAREA), TAG(TFOOT), TAG(TH),
-          TAG(THEAD), TAG(TITLE), TAG(TR), TAG(UL), TAG(WBR), TAG(XMP),
+          TAG(THEAD), TAG(TR), TAG(UL), TAG(WBR), TAG(XMP),
 
           TAG_MATHML(MI), TAG_MATHML(MO), TAG_MATHML(MN), TAG_MATHML(MS),
           TAG_MATHML(MTEXT), TAG_MATHML(ANNOTATION_XML),
 
-          TAG_SVG(FOREIGNOBJECT), TAG_SVG(DESC)});
+          TAG_SVG(FOREIGNOBJECT), TAG_SVG(DESC),
+
+          // This TagSet needs to include the "title" element in both the
+          // HTML and SVG namespaces. Using both TAG(TITLE) and TAG_SVG(TITLE)
+          // won't work, due to the simplistic way in which the TAG macros are
+          // implemented, so we do it like this instead:
+          [GUMBO_TAG_TITLE] =
+              (1 << GUMBO_NAMESPACE_HTML) |
+              (1 << GUMBO_NAMESPACE_SVG)
+      }
+   );
 }
 
 // Implicitly closes currently open elements until it reaches an element with
@@ -2354,13 +2368,59 @@ static bool handle_after_head(GumboParser* parser, GumboToken* token) {
   }
 }
 
-static void destroy_node(GumboParser* parser, GumboNode* node) {
+// See https://github.com/google/gumbo-parser/issues/387
+// recursive destroy_node can cause stack overrun
+// See: https://github.com/google/gumbo-parser/pull/392
+size_t gumbo_tree_traverse(GumboNode* node, void* userdata, gumbo_tree_iter_callback cb) {
+  GumboNode* current_node = node;
+  size_t offset = 0, retcode = 0;
+  tailcall:
+
+#define RECURSE                                                 \
+   do {                                                          \
+     offset = current_node->index_within_parent + 1;             \
+     GumboNode* next_node = current_node->parent;                \
+     if ((retcode = cb(userdata, current_node))) return retcode; \
+     if (current_node == node) return 0;                         \
+     current_node = next_node;                                   \
+     goto tailcall;                                              \
+   } while (0)
+
+   switch (current_node->type) {
+     case GUMBO_NODE_DOCUMENT:
+     case GUMBO_NODE_TEMPLATE:
+     case GUMBO_NODE_ELEMENT: {
+       GumboVector* children = GUMBO_NODE_DOCUMENT == current_node->type
+                                   ? &current_node->v.document.children
+                                   : &current_node->v.element.children;
+       if (offset >= children->length) {
+         assert(offset == children->length);
+         RECURSE;
+       } else {
+         current_node = children->data[offset];
+         offset = 0;
+         goto tailcall;
+       }
+     } break;
+     case GUMBO_NODE_TEXT:
+     case GUMBO_NODE_CDATA:
+     case GUMBO_NODE_COMMENT:
+     case GUMBO_NODE_WHITESPACE: {
+       assert(0 == offset);
+       RECURSE;
+     } break;
+     default:
+       assert(!"Invalid GumboNodeType!");
+       abort();
+     }
+#undef RECURSE
+}
+
+static size_t destroy_one_node(void* parser_, GumboNode* node) {
+  GumboParser* parser = (GumboParser*) parser_;
   switch (node->type) {
     case GUMBO_NODE_DOCUMENT: {
       GumboDocument* doc = &node->v.document;
-      for (unsigned int i = 0; i < doc->children.length; ++i) {
-        destroy_node(parser, doc->children.data[i]);
-      }
       gumbo_parser_deallocate(parser, (void*) doc->children.data);
       gumbo_parser_deallocate(parser, (void*) doc->name);
       gumbo_parser_deallocate(parser, (void*) doc->public_identifier);
@@ -2372,9 +2432,6 @@ static void destroy_node(GumboParser* parser, GumboNode* node) {
         gumbo_destroy_attribute(parser, node->v.element.attributes.data[i]);
       }
       gumbo_parser_deallocate(parser, node->v.element.attributes.data);
-      for (unsigned int i = 0; i < node->v.element.children.length; ++i) {
-        destroy_node(parser, node->v.element.children.data[i]);
-      }
       gumbo_parser_deallocate(parser, node->v.element.children.data);
       break;
     case GUMBO_NODE_TEXT:
@@ -2385,6 +2442,11 @@ static void destroy_node(GumboParser* parser, GumboNode* node) {
       break;
   }
   gumbo_parser_deallocate(parser, node);
+  return 0;
+}
+
+static void destroy_node(GumboParser* parser, GumboNode* node) {
+  gumbo_tree_traverse(node, parser, &destroy_one_node);
 }
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#parsing-main-inbody
@@ -3191,7 +3253,8 @@ static bool handle_in_table_text(GumboParser* parser, GumboToken* token) {
     // of any one byte that is not whitespace means we flip the flag, so this
     // loop is still valid.
     for (unsigned int i = 0; i < buffer->length; ++i) {
-      if (!isspace((unsigned char) buffer->data[i]) ||
+      // need non-local depdent version of isspace see https://github.com/google/gumbo-parser/pull/386
+      if (!gumbo_isspace((unsigned char) buffer->data[i]) ||
           buffer->data[i] == '\v') {
         state->_foster_parent_insertions = true;
         reconstruct_active_formatting_elements(parser);
