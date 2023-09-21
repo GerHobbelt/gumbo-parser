@@ -70,7 +70,13 @@ static void free_wrapper(void* unused, void* ptr) { free(ptr); }
 // prevent Quadratic time and memory use with many unclosed tags
 // https://github.com/google/gumbo-parser/issues/391
 const GumboOptions kGumboDefaultOptions = {&malloc_wrapper, &free_wrapper, NULL,
-    8, false, 50, GUMBO_TAG_LAST, GUMBO_NAMESPACE_HTML};
+  .tab_stop = 8,
+  .stop_on_first_error = false,
+  .max_tree_depth = 400,
+  .max_errors = 50 /* -1 */,
+  .fragment_context = GUMBO_TAG_LAST,
+  .fragment_namespace = GUMBO_NAMESPACE_HTML
+};
 
 static const GumboStringPiece kDoctypeHtml = GUMBO_STRING("html");
 static const GumboStringPiece kPublicIdHtml4_0 =
@@ -4150,6 +4156,7 @@ GumboOutput* gumbo_parse_with_options(
   // of hanging the process before we ever get an error.
   int loop_count = 0;
 
+  const unsigned int max_tree_depth = options->max_tree_depth;
   GumboToken token;
   bool has_error = false;
 
@@ -4201,6 +4208,12 @@ GumboOutput* gumbo_parse_with_options(
       if (error) {
         error->type = GUMBO_ERR_UNACKNOWLEDGED_SELF_CLOSING_TAG;
       }
+    }
+
+    if (unlikely(state->_open_elements.length > max_tree_depth)) {
+      parser._output->status = GUMBO_STATUS_TREE_TOO_DEEP;
+      gumbo_debug("Tree depth limit exceeded.\n");
+      break;
     }
 
     ++loop_count;

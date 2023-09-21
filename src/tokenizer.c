@@ -63,7 +63,7 @@
 
 // Compared against _script_data_buffer to determine if we're in double-escaped
 // script mode.
-const GumboStringPiece kScriptTag = {"script", 6};
+const GumboStringPiece kScriptTag = {.data = "script", .length = 6};
 
 // An enum for the return value of each individual state.
 typedef enum {
@@ -312,7 +312,11 @@ static bool is_alpha(int c) {
   // We don't use ISO C isupper/islower functions here because they
   // depend upon the program's locale, while the behavior of the HTML5 spec is
   // independent of which locale the program is run in.
+#if 0
   return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+#else
+  return (((unsigned int) c) | 32) - 'a' < 26;
+#endif
 }
 
 static int ensure_lowercase(int c) {
