@@ -79,6 +79,42 @@ class GumboParserTest : public ::testing::Test {
   GumboNode* root_;
 };
 
+TEST_F(GumboParserTest, TreeDepthLimitEnforced) {
+  char* input = string_repeat("<div>", kGumboDefaultOptions.max_tree_depth);
+
+  // Can't use Parse() here, since it asserts that status is GUMBO_STATUS_OK
+  output_ = gumbo_parse_with_options(&options_, input, strlen(input));
+  root_ = output_->document;
+
+  ASSERT_EQ(GUMBO_STATUS_TREE_TOO_DEEP, output_->status);
+  ASSERT_TRUE(root_);
+  ASSERT_EQ(GUMBO_NODE_DOCUMENT, root_->type);
+  EXPECT_EQ(GUMBO_INSERTION_BY_PARSER, root_->parse_flags);
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  gumbo_free(input);
+}
+
+TEST_F(GumboParserTest, CustomTreeDepthLimit) {
+  options_.max_tree_depth = 800;
+
+  // 798 nested divs should parse as normal and not hit the depth
+  // limit set above
+  char* div798 = string_repeat("<div>", 798);
+  output_ = gumbo_parse_with_options(&options_, div798, strlen(div798));
+  ASSERT_EQ(GUMBO_STATUS_OK, output_->status);
+  gumbo_destroy_output(output_);
+  gumbo_free(div798);
+
+  // 799 nested divs exceeds the limit, because the parser-inserted
+  // <html> and <body> nodes make the tree 801 nodes deep.
+  char* div799 = string_repeat("<div>", 799);
+  output_ = gumbo_parse_with_options(&options_, div799, strlen(div799));
+  ASSERT_EQ(GUMBO_STATUS_TREE_TOO_DEEP, output_->status);
+  gumbo_free(div799);
+}
+
 TEST_F(GumboParserTest, NullDocument) {
   Parse("");
   ASSERT_TRUE(root_);

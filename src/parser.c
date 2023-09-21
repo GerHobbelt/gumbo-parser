@@ -485,6 +485,7 @@ static void output_init(GumboParser* parser) {
   GumboOutput* output = gumbo_parser_allocate(parser, sizeof(GumboOutput));
   output->root = NULL;
   output->document = new_document_node(parser);
+  output->status = GUMBO_STATUS_OK;
   parser->_output = output;
   gumbo_init_errors(parser);
 }
@@ -3249,7 +3250,7 @@ static bool handle_in_table_text(GumboParser* parser, GumboToken* token) {
     // of any one byte that is not whitespace means we flip the flag, so this
     // loop is still valid.
     for (unsigned int i = 0; i < buffer->length; ++i) {
-      // need non-local depdent version of isspace see https://github.com/google/gumbo-parser/pull/386
+      // need non-locale dependent version of isspace see https://github.com/google/gumbo-parser/pull/386
       if (!gumbo_isspace((unsigned char) buffer->data[i]) ||
           buffer->data[i] == '\v') {
         state->_foster_parent_insertions = true;
@@ -4210,7 +4211,7 @@ GumboOutput* gumbo_parse_with_options(
       }
     }
 
-    if (unlikely(state->_open_elements.length > max_tree_depth)) {
+    if (state->_open_elements.length > max_tree_depth) {
       parser._output->status = GUMBO_STATUS_TREE_TOO_DEEP;
       gumbo_debug("Tree depth limit exceeded.\n");
       break;
@@ -4259,6 +4260,19 @@ GumboOutput* gumbo_parse_with_options(
   parser_state_destroy(&parser);
   gumbo_tokenizer_state_destroy(&parser);
   return parser._output;
+}
+
+const char* gumbo_status_to_string(GumboOutputStatus status) {
+  switch (status) {
+    case GUMBO_STATUS_OK:
+      return "OK";
+    case GUMBO_STATUS_OUT_OF_MEMORY:
+      return "System allocator returned NULL during parsing";
+    case GUMBO_STATUS_TREE_TOO_DEEP:
+      return "Document tree depth limit exceeded";
+    default:
+      return "Unknown GumboOutputStatus value";
+  }
 }
 
 void gumbo_destroy_node(GumboOptions* options, GumboNode* node) {
