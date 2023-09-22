@@ -206,6 +206,9 @@ const char* gumbo_normalize_svg_tagname(const GumboStringPiece* tagname);
 GumboTag gumbo_tag_enum(const char* tagname);
 GumboTag gumbo_tagn_enum(const char* tagname, unsigned int length);
 
+// (only pprovided for testing purposes)
+const char** getGumboTagNamesList(void);
+
 /**
  * Attribute namespaces.
  * HTML includes special handling for XLink, XML, and XMLNS namespaces on
@@ -730,6 +733,22 @@ const char* gumbo_status_to_string(GumboOutputStatus status);
 
 /** Release the memory used for the parse tree & parse errors. */
 void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+#if defined(BUILD_MONOLITHIC)
+int gumbo_benchmark_main(int argc, const char** argv);
+int gumbo_clean_text_main(int argc, const char** argv);
+int gumbo_find_links_main(int argc, const char** argv);
+int gumbo_get_title_main(int argc, const char** argv);
+int gumbo_positions_of_class_main(int argc, const char** argv);
+int gumbo_prettyprint_main(int argc, const char** argv);
+int gumbo_serialize_main(int argc, const char** argv);
+int gumbo_print_main(int argc, const char** argv);
+#endif
+
 
 #ifdef __cplusplus
 }
