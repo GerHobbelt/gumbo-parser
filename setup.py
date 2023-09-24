@@ -169,7 +169,7 @@ CLASSIFIERS = [
 ]
 
 setup(name='gumbo',
-      version='0.12.0',
+      version='0.12.1',
       description='Python bindings for Gumbo HTML parser',
       long_description=README,
       url='http://github.com/google/gumbo-parser',
