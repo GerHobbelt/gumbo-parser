@@ -1,4 +1,4 @@
-## Contributing
+## Contributing guide
 
 Bug reports are very much welcome. Please use Codeberg's issue-tracking feature, as it makes it easier to keep track of bugs and makes it possible for other project watchers to view the existing issues.
 
