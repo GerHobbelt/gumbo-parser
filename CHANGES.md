@@ -1,3 +1,11 @@
+## Gumbo 0.12.1 (2023-09-24)
+
+* Fix empty the end of the tag `<form>` ([#372@gumbo-parser](https://github.com/google/gumbo-parser/pull/372))
+* Correctly handle text in `<form>` elements ([73c5df2@nokogiri](https://github.com/sparklemotion/nokogiri/commit/73c5df2171dc5f10f3c378436b34618af1c279b6))
+* Fix tag name filtering that could result in XSS ([#375@gumbo-parser](https://github.com/google/gumbo-parser/pull/375))
+* Return `visualc/include/strings.h` file (see https://github.com/mesonbuild/wrapdb/pull/1198)
+* Reorganize docs a little
+
 ## Gumbo 0.12.0 (2023-07-18)
 
 * Add support for `<dialog>` tag
