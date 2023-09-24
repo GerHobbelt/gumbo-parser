@@ -2675,6 +2675,11 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
       }
       // Retrieve <form> element by using implicitly_close_tags rather than
 #if 0
+      // Since we remove the form node without popping, we need to make sure
+      // that we flush any text nodes at the end of the form.
+      maybe_flush_text_node_buffer(parser);
+      // This differs from implicitly_close_tags because we remove *only* the
+      // <form> element; other nodes are left in scope.
       generate_implied_end_tags(parser, GUMBO_TAG_LAST);
       if (get_current_node(parser) == node) {
         record_end_of_element(token, &node->v.element);
