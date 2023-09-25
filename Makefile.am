@@ -9,19 +9,11 @@ ACLOCAL_AMFLAGS = -I m4
 
 if !HAVE_SHARED_LIBGTEST
 
-# Build gtest before we build protobuf tests.  We don't add gtest to SUBDIRS
-# because then "make check" would also build and run all of gtest's own tests,
-# which takes a lot of time and is generally not useful to us.  Also, we don't
-# want "make install" to recurse into gtest since we don't want to overwrite
-# the installed version of gtest if there is one.
-check-local: gtest/lib/libgtest.la gtest/lib/libgtest_main.la
+gtest/lib/libgtest.a gtest/lib/libgtest_main.a: gtest/Makefile
+	cd gtest && $(MAKE) $(AM_MAKEFLAGS)
 
-gtest/lib/libgtest.la gtest/lib/libgtest_main.la: gtest/Makefile
-	@echo "Making lib/libgtest.a lib/libgtest_main.a in gtest"
-	@cd gtest && $(MAKE) $(AM_MAKEFLAGS) lib/libgtest.la lib/libgtest_main.la
-
-gtest/Makefile: gtest/configure
-	@cd gtest && ./configure
+gtest/Makefile: gtest/CMakeLists.txt
+	cd gtest && cmake . -DBUILD_GMOCK=OFF
 
 # We would like to clean gtest when "make clean" is invoked.  But we have to
 # be careful because clean-local is also invoked during "make distclean", but
@@ -97,7 +89,7 @@ TESTS = gumbo_test
 gumbo_test_CPPFLAGS = \
 				-I"$(srcdir)/." \
 				-I"$(srcdir)/src" \
-				-I"$(srcdir)/gtest/include"
+				-I"$(srcdir)/gtest/googletest/include"
 gumbo_test_SOURCES = \
 				tests/attribute.cc \
 				tests/char_ref.cc \
@@ -117,8 +109,8 @@ if HAVE_SHARED_LIBGTEST
 # FIXME(bnoordhuis) Should be configurable by the user.
 gumbo_test_LDADD += -lgtest -lgtest_main
 else
-gumbo_test_DEPENDENCIES += check-local
-gumbo_test_LDADD += gtest/lib/libgtest.la gtest/lib/libgtest_main.la
+gumbo_test_DEPENDENCIES += gtest/lib/libgtest.a gtest/lib/libgtest_main.a
+gumbo_test_LDADD += gtest/lib/libgtest.a gtest/lib/libgtest_main.a
 endif
 
 if HAVE_EXAMPLES
