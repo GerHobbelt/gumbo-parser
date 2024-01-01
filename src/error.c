@@ -136,8 +136,13 @@ static const char* find_last_newline(
   assert(error_location >= original_text);
   const char* c = error_location;
   // if the error location itself is a newline then start searching for 
-  // the preceding newline one character earlier; see original PR #371: avoid overflow segfault
-  if (*error_location == '\n' && c != original_text) --c;
+  // the preceding newline one character earlier; see original PR #371: avoid overflow segfault.
+  // See:
+  // https://github.com/rubys/nokogumbo/commit/bd623555730cdd260f6cec6d7cf990ff297da63d
+  // https://github.com/google/gumbo-parser/pull/371
+  if (*c == '\n' && c != original_text) {
+    c -= 1;
+  }
   for (; c != original_text && *c != '\n'; --c) {
     // There may be an error at EOF, which would be a nul byte.
     assert(*c || c == error_location);
