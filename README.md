@@ -54,19 +54,19 @@ int main() {
 }
 ```
 
-There are a number of sample programs in the [examples directory](https://codeberg.org/grisha/gumbo-parser/src/branch/master/examples).
+There are a number of sample programs in the [examples directory](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/examples).
 They're built automatically by `make`, but can also be made individually with
 `make <programname>` (eg. `make clean_text`). Also don't forget to check out
 API documentation.
 
 ## Learning more
 
-* Building instructions: [doc/building.md](https://codeberg.org/grisha/gumbo-parser/src/branch/master/doc/building.md)
-* Language bindings and other tools: [doc/bindings.md](https://codeberg.org/grisha/gumbo-parser/src/branch/master/doc/bindings.md)
-* Contributing guide: [doc/contributing.md](https://codeberg.org/grisha/gumbo-parser/src/branch/master/doc/contributing.md)
-* Debugging notes: [doc/debugging.md](https://codeberg.org/grisha/gumbo-parser/src/branch/master/doc/debugging.md)
-* Maintenance directions: [doc/maintaining.md](https://codeberg.org/grisha/gumbo-parser/src/branch/master/doc/maintaining.md)
-* Test suite guide: [doc/testing.md](https://codeberg.org/grisha/gumbo-parser/src/branch/master/doc/testing.md)
+* Building instructions: [doc/building.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/building.md)
+* Language bindings and other tools: [doc/bindings.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/bindings.md)
+* Contributing guide: [doc/contributing.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/contributing.md)
+* Debugging notes: [doc/debugging.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/debugging.md)
+* Maintenance directions: [doc/maintaining.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/maintaining.md)
+* Test suite guide: [doc/testing.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/testing.md)
 
 ## A note on API/ABI compatibility
 
