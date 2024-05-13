@@ -84,8 +84,10 @@ libgumbo_la_SOURCES = \
 				src/util.c \
 				src/util.h \
 				src/vector.c \
-				src/vector.h
-include_HEADERS = src/gumbo.h src/tag_enum.h
+				src/vector.h \
+                src/xpath.h \
+                src/xpath.c
+include_HEADERS = src/gumbo.h src/tag_enum.h src/vector.h src/xpath.h src/parser.h src/string_buffer.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gumbo.pc
@@ -120,7 +122,7 @@ gumbo_test_LDADD += gtest/lib/libgtest.la gtest/lib/libgtest_main.la
 endif
 
 if HAVE_EXAMPLES
-noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint print
+noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint print evalxpath
 endif
 LDADD = libgumbo.la
 AM_CPPFLAGS = -I"$(srcdir)/src"
@@ -134,3 +136,4 @@ benchmark_SOURCES = benchmarks/benchmark.cc
 serialize_SOURCES = examples/serialize.cc
 prettyprint_SOURCES = examples/prettyprint.cc
 print_SOURCES = tools/print.cc
+evalxpath_SOURCES = examples/eval_xpath.cc

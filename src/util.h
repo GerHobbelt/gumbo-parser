@@ -66,6 +66,11 @@ bool gumbo_isspace(unsigned char ch);
 
 bool gumbo_isalnum(unsigned char ch);
 
+// translate string to positive integer
+bool gumbo_str_to_positive_integer(const char *str, int len, int *out);
+
+// translate string to double
+bool gumbo_str_to_double(const char *str, int len, double *out);
 
 // Debug wrapper for printf, to make it easier to turn off debugging info when
 // required.
