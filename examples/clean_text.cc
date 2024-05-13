@@ -71,7 +71,7 @@ int main(int argc, const char** argv) {
 
   GumboOutput* output = gumbo_parse(contents.c_str());
   std::cout << cleantext(output->root) << std::endl;
-  gumbo_destroy_output(&kGumboDefaultOptions, output);
+  gumbo_destroy_output(output);
 
   return EXIT_SUCCESS;
 }

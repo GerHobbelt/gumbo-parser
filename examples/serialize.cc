@@ -347,7 +347,7 @@ int main(int argc, const char** argv) {
 
   GumboOutput* output = gumbo_parse_with_options(&options, contents.data(), contents.length());
   std::cout << serialize(output->document) << std::endl;
-  gumbo_destroy_output(&options, output);
+  gumbo_destroy_output(output);
 
   return EXIT_SUCCESS;
 }

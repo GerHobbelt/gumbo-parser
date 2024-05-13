@@ -93,7 +93,7 @@ int main(int argc, const char** argv) {
   GumboOutput* output = gumbo_parse_with_options(
       &kGumboDefaultOptions, contents.data(), contents.length());
   search_for_class(output->root, contents, cls);
-  gumbo_destroy_output(&kGumboDefaultOptions, output);
+  gumbo_destroy_output(output);
 
   return EXIT_SUCCESS;
 }

@@ -1,67 +1,62 @@
-// Copyright 2010 Google Inc. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Author: jdtang@google.com (Jonathan Tang)
+/*
+ Copyright 2010 Google Inc.
 
-#include "string_buffer.h"
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-#include <assert.h>
-#include <stdlib.h>
+    https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 #include <string.h>
 #include "string_util.h"
-
-#include "string_piece.h"
+#include "string_buffer.h"
 #include "util.h"
-
-struct GumboInternalParser;
 
 // Size chosen via statistical analysis of ~60K websites.
 // 99% of text nodes and 98% of attribute names/values fit in this initial size.
 static const size_t kDefaultStringBufferSize = 5;
 
-static void maybe_resize_string_buffer(struct GumboInternalParser* parser,
-    size_t additional_chars, GumboStringBuffer* buffer) {
+static void maybe_resize_string_buffer (
+  size_t additional_chars,
+  GumboStringBuffer* buffer
+) {
   size_t new_length = buffer->length + additional_chars;
   size_t new_capacity = buffer->capacity;
   while (new_capacity < new_length) {
     new_capacity *= 2;
   }
   if (new_capacity != buffer->capacity) {
-    char* new_data = gumbo_parser_allocate(parser, new_capacity);
-    memcpy(new_data, buffer->data, buffer->length);
-    gumbo_parser_deallocate(parser, buffer->data);
-    buffer->data = new_data;
+    buffer->data = gumbo_realloc(buffer->data, new_capacity);
     buffer->capacity = new_capacity;
   }
 }
 
-void gumbo_string_buffer_init(
-    struct GumboInternalParser* parser, GumboStringBuffer* output) {
-  output->data = gumbo_parser_allocate(parser, kDefaultStringBufferSize);
+void gumbo_string_buffer_init(GumboStringBuffer* output) {
+  output->data = gumbo_alloc(kDefaultStringBufferSize);
   output->length = 0;
   output->capacity = kDefaultStringBufferSize;
 }
 
-void gumbo_string_buffer_reserve(struct GumboInternalParser* parser,
-    size_t min_capacity, GumboStringBuffer* output) {
-  maybe_resize_string_buffer(parser, min_capacity - output->length, output);
+void gumbo_string_buffer_reserve (
+  size_t min_capacity,
+  GumboStringBuffer* output
+) {
+  maybe_resize_string_buffer(min_capacity - output->length, output);
 }
 
-void gumbo_string_buffer_append_codepoint(
-    struct GumboInternalParser* parser, int c, GumboStringBuffer* output) {
+void gumbo_string_buffer_append_codepoint (
+  int c,
+  GumboStringBuffer* output
+) {
   // num_bytes is actually the number of continuation bytes, 1 less than the
-  // total number of bytes.  This is done to keep the loop below simple and
+  // total number of bytes. This is done to keep the loop below simple and
   // should probably change if we unroll it.
   int num_bytes, prefix;
   if (c <= 0x7f) {
@@ -77,7 +72,7 @@ void gumbo_string_buffer_append_codepoint(
     num_bytes = 3;
     prefix = 0xf0;
   }
-  maybe_resize_string_buffer(parser, num_bytes + 1, output);
+  maybe_resize_string_buffer(num_bytes + 1, output);
   int length = output->length;
   char* data = output->data;
   data[length++] = prefix | (c >> (num_bytes * 6));
@@ -87,27 +82,26 @@ void gumbo_string_buffer_append_codepoint(
   output->length = length;
 }
 
-void gumbo_string_buffer_append_string(struct GumboInternalParser* parser,
-    GumboStringPiece* str, GumboStringBuffer* output) {
-  maybe_resize_string_buffer(parser, str->length, output);
+void gumbo_string_buffer_append_string (
+  const GumboStringPiece* str,
+  GumboStringBuffer* output
+) {
+  maybe_resize_string_buffer(str->length, output);
   memcpy(output->data + output->length, str->data, str->length);
   output->length += str->length;
 }
 
-char* gumbo_string_buffer_to_string(
-    struct GumboInternalParser* parser, GumboStringBuffer* input) {
-  char* buffer = gumbo_parser_allocate(parser, input->length + 1);
+char* gumbo_string_buffer_to_string(const GumboStringBuffer* input) {
+  char* buffer = gumbo_alloc(input->length + 1);
   memcpy(buffer, input->data, input->length);
   buffer[input->length] = '\0';
   return buffer;
 }
 
-void gumbo_string_buffer_clear(
-    struct GumboInternalParser* parser, GumboStringBuffer* input) {
+void gumbo_string_buffer_clear(GumboStringBuffer* input) {
   input->length = 0;
 }
 
-void gumbo_string_buffer_destroy(
-    struct GumboInternalParser* parser, GumboStringBuffer* buffer) {
-  gumbo_parser_deallocate(parser, buffer->data);
+void gumbo_string_buffer_destroy(GumboStringBuffer* buffer) {
+  gumbo_free(buffer->data);
 }
