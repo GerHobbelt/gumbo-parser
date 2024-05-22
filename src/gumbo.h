@@ -578,7 +578,7 @@ typedef void (*GumboDeallocatorFunction)(void* userdata, void* ptr);
  * The type for a resize/reallocator function.  Takes the 'userdata' member of the
  * GumboParser struct as its first argument.
  */
-typedef void (*GumboReallocatorFunction)(void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes);
+typedef void* (*GumboReallocatorFunction)(void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes);
 
 /**
  * Input struct containing configuration options for the parser.
@@ -594,7 +594,7 @@ typedef struct GumboInternalOptions {
   GumboDeallocatorFunction deallocator;
 
   /** A memory resize/reallocator function. Default: realloc. */
-  GumboDeallocatorFunction reallocator;
+  GumboReallocatorFunction reallocator;
 
   /**
    * An opaque object that's passed in as the first argument to all callbacks
@@ -749,6 +749,7 @@ void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output);
 
 #if defined(BUILD_MONOLITHIC)
 int gumbo_benchmark_main(int argc, const char** argv);
+int gumbo_eval_xpath_main(int argc, const char** argv);
 int gumbo_clean_text_main(int argc, const char** argv);
 int gumbo_find_links_main(int argc, const char** argv);
 int gumbo_get_title_main(int argc, const char** argv);

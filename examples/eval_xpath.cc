@@ -18,7 +18,11 @@ static void read_file(FILE* fp, char** output, int* length) {
   }
 }
 
-int main(int argc, char** argv) {
+#if defined(BUILD_MONOLITHIC)
+#define main gumbo_eval_xpath_main
+#endif
+
+int main(int argc, const char** argv) {
   if (argc != 3) {
       printf("evalxpath <html filename> <xpathexpression>\n");
       exit(EXIT_FAILURE);

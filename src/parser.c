@@ -80,7 +80,7 @@ static void* realloc_wrapper(void* unused, void* ptr, size_t new_num_bytes, size
 const GumboOptions kGumboDefaultOptions = {
   .allocator = &malloc_wrapper,
   .deallocator = &free_wrapper,
-  .deallocator = &realloc_wrapper,
+  .reallocator = &realloc_wrapper,
   .userdata = NULL,
   .tab_stop = 8,
   .stop_on_first_error = false,
@@ -430,23 +430,20 @@ static bool token_has_attribute(const GumboToken* token, const char* name) {
 
 // Checks if the value of the specified attribute is a case-insensitive match
 // for the specified string.
-static bool attribute_matches(
-    const GumboVector* attributes, const char* name, const char* value) {
+static bool attribute_matches(const GumboVector* attributes, const char* name, const char* value) {
   const GumboAttribute* attr = gumbo_get_attribute(attributes, name);
-  return attr ? strcasecmp(value, attr->value) == 0 : false;
+  return attr ? gumbo_strcasecmp(value, attr->value) == 0 : false;
 }
 
 // Checks if the value of the specified attribute is a case-sensitive match
 // for the specified string.
-static bool attribute_matches_case_sensitive(
-    const GumboVector* attributes, const char* name, const char* value) {
+static bool attribute_matches_case_sensitive(const GumboVector* attributes, const char* name, const char* value) {
   const GumboAttribute* attr = gumbo_get_attribute(attributes, name);
   return attr ? strcmp(value, attr->value) == 0 : false;
 }
 
 // Checks if the specified attribute vectors are identical.
-static bool all_attributes_match(
-    const GumboVector* attr1, const GumboVector* attr2) {
+static bool all_attributes_match(const GumboVector* attr1, const GumboVector* attr2) {
   unsigned int num_unmatched_attr2_elements = attr2->length;
   for (unsigned int i = 0; i < attr1->length; ++i) {
     const GumboAttribute* attr = attr1->data[i];
@@ -568,7 +565,7 @@ static bool is_in_static_list(
     const char* needle, const GumboStringPiece* haystack, bool exact_match) {
   for (unsigned int i = 0; haystack[i].length > 0; ++i) {
     if ((exact_match && !strcmp(needle, haystack[i].data)) ||
-        (!exact_match && !strcasecmp(needle, haystack[i].data))) {
+        (!exact_match && !gumbo_strcasecmp(needle, haystack[i].data))) {
       return true;
     }
   }
@@ -584,8 +581,7 @@ static void set_insertion_mode(GumboParser* parser, GumboInsertionMode mode) {
 // of setting it.  Returns GUMBO_INSERTION_MODE_INITIAL as a sentinel value to
 // indicate that there is no appropriate insertion mode, and the loop should
 // continue.
-static GumboInsertionMode get_appropriate_insertion_mode(
-    const GumboParser* parser, int index) {
+static GumboInsertionMode get_appropriate_insertion_mode(const GumboParser* parser, int index) {
   const GumboVector* open_elements = &parser->_parser_state->_open_elements;
   const GumboNode* node = open_elements->data[index];
   const bool is_last = index == 0;
@@ -665,8 +661,7 @@ static void reset_insertion_mode_appropriately(GumboParser* parser) {
   assert(0);
 }
 
-static GumboError* parser_add_parse_error(
-    GumboParser* parser, const GumboToken* token) {
+static GumboError* parser_add_parse_error(GumboParser* parser, const GumboToken* token) {
   gumbo_debug("Adding parse error.\n");
   GumboError* error = gumbo_add_error(parser);
   if (!error) {
@@ -699,8 +694,7 @@ static GumboError* parser_add_parse_error(
 // by is_start) with one of the tag types in the varargs list.  Terminate the
 // list with GUMBO_TAG_LAST; this functions as a sentinel since no portion of
 // the spec references tags that are not in the spec.
-static bool tag_in(
-    const GumboToken* token, bool is_start, const gumbo_tagset tags) {
+static bool tag_in(const GumboToken* token, bool is_start, const gumbo_tagset tags) {
   GumboTag token_tag;
   if (is_start && token->type == GUMBO_TOKEN_START_TAG) {
     token_tag = token->v.start_tag.tag;
@@ -746,8 +740,7 @@ static bool node_html_tag_is(const GumboNode* node, GumboTag tag) {
   return node_qualified_tag_is(node, GUMBO_NAMESPACE_HTML, tag);
 }
 
-static void push_template_insertion_mode(
-    GumboParser* parser, GumboInsertionMode mode) {
+static void push_template_insertion_mode(GumboParser* parser, GumboInsertionMode mode) {
   gumbo_vector_add(
       parser, (void*)(intptr_t) mode, &parser->_parser_state->_template_insertion_modes);
 }
@@ -758,8 +751,7 @@ static void pop_template_insertion_mode(GumboParser* parser) {
 
 // Returns the current template insertion mode.  If the stack of template
 // insertion modes is empty, this returns GUMBO_INSERTION_MODE_INITIAL.
-static GumboInsertionMode get_current_template_insertion_mode(
-    const GumboParser* parser) {
+static GumboInsertionMode get_current_template_insertion_mode(const GumboParser* parser) {
   GumboVector* template_insertion_modes =
       &parser->_parser_state->_template_insertion_modes;
   if (template_insertion_modes->length == 0) {
@@ -796,8 +788,7 @@ typedef struct {
   int index;
 } InsertionLocation;
 
-InsertionLocation get_appropriate_insertion_location(
-    GumboParser* parser, GumboNode* override_target) {
+InsertionLocation get_appropriate_insertion_location(GumboParser* parser, GumboNode* override_target) {
   InsertionLocation retval = {override_target, -1};
   if (retval.target == NULL) {
     // No override target; default to the current node, but special-case the
@@ -866,8 +857,7 @@ static void append_node(GumboParser* parser, GumboNode* parent, GumboNode* node)
 // Inserts a node at the specified InsertionLocation, updating the
 // "parent" and "index_within_parent" fields of it and all its siblings.
 // If the index of the location is -1, this calls append_node.
-static void insert_node(
-    GumboParser* parser, GumboNode* node, InsertionLocation location) {
+static void insert_node(GumboParser* parser, GumboNode* node, InsertionLocation location) {
   assert(node->parent == NULL);
   assert(node->index_within_parent == -1);
   GumboNode* parent = location.target;
@@ -936,8 +926,7 @@ static void maybe_flush_text_node_buffer(GumboParser* parser) {
   assert(buffer_state->_buffer.length == 0);
 }
 
-static void record_end_of_element(
-    GumboToken* current_token, GumboElement* element) {
+static void record_end_of_element(GumboToken* current_token, GumboElement* element) {
   element->end_pos = current_token->position;
   element->original_end_tag = current_token->type == GUMBO_TOKEN_END_TAG
                                   ? current_token->original_text
@@ -975,8 +964,7 @@ static GumboNode* pop_current_node(GumboParser* parser) {
   return current_node;
 }
 
-static void append_comment_node(
-    GumboParser* parser, GumboNode* node, const GumboToken* token) {
+static void append_comment_node(GumboParser* parser, GumboNode* node, const GumboToken* token) {
   maybe_flush_text_node_buffer(parser);
   GumboNode* comment = create_node(parser, GUMBO_NODE_COMMENT);
   comment->type = GUMBO_NODE_COMMENT;
@@ -1030,8 +1018,7 @@ static GumboNode* create_element(GumboParser* parser, GumboTag tag) {
 }
 
 // Constructs an element from the given start tag token.
-static GumboNode* create_element_from_token(
-    GumboParser* parser, GumboToken* token, GumboNamespaceEnum tag_namespace) {
+static GumboNode* create_element_from_token(GumboParser* parser, GumboToken* token, GumboNamespaceEnum tag_namespace) {
   assert(token->type == GUMBO_TOKEN_START_TAG);
   GumboTokenStartTag* start_tag = &token->v.start_tag;
 
@@ -1085,8 +1072,7 @@ static void insert_element(GumboParser* parser, GumboNode* node,
 // Convenience method that combines create_element_from_token and
 // insert_element, inserting the generated element directly into the current
 // node.  Returns the node inserted.
-static GumboNode* insert_element_from_token(
-    GumboParser* parser, GumboToken* token) {
+static GumboNode* insert_element_from_token(GumboParser* parser, GumboToken* token) {
   GumboNode* element = create_element_from_token(parser, token, GUMBO_NAMESPACE_HTML);
   insert_element(parser, element, false);
   gumbo_debug("Inserting <%s> element (@%x) from token.\n",
@@ -1097,8 +1083,7 @@ static GumboNode* insert_element_from_token(
 // Convenience method that combines create_element and insert_element, inserting
 // a parser-generated element of a specific tag type.  Returns the node
 // inserted.
-static GumboNode* insert_element_of_tag_type(
-    GumboParser* parser, GumboTag tag, GumboParseFlags reason) {
+static GumboNode* insert_element_of_tag_type(GumboParser* parser, GumboTag tag, GumboParseFlags reason) {
   GumboNode* element = create_element(parser, tag);
   element->parse_flags |= GUMBO_INSERTION_BY_PARSER | reason;
   insert_element(parser, element, false);
@@ -1109,8 +1094,7 @@ static GumboNode* insert_element_of_tag_type(
 
 // Convenience method for creating foreign namespaced element.  Returns the node
 // inserted.
-static GumboNode* insert_foreign_element(
-    GumboParser* parser, GumboToken* token, GumboNamespaceEnum tag_namespace) {
+static GumboNode* insert_foreign_element(GumboParser* parser, GumboToken* token, GumboNamespaceEnum tag_namespace) {
   assert(token->type == GUMBO_TOKEN_START_TAG);
   GumboNode* element = create_element_from_token(parser, token, tag_namespace);
   insert_element(parser, element, false);
@@ -1150,8 +1134,7 @@ static void insert_text_token(GumboParser* parser, GumboToken* token) {
 }
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#generic-rcdata-element-parsing-algorithm
-static void run_generic_parsing_algorithm(
-    GumboParser* parser, GumboToken* token, GumboTokenizerEnum lexer_state) {
+static void run_generic_parsing_algorithm(GumboParser* parser, GumboToken* token, GumboTokenizerEnum lexer_state) {
   insert_element_from_token(parser, token);
   gumbo_tokenizer_set_state(parser, lexer_state);
   parser->_parser_state->_original_insertion_mode =
@@ -1339,8 +1322,7 @@ static void clear_active_formatting_elements(GumboParser* parser) {
 }
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#the-initial-insertion-mode
-static GumboQuirksModeEnum compute_quirks_mode(
-    const GumboTokenDocType* doctype) {
+static GumboQuirksModeEnum compute_quirks_mode(const GumboTokenDocType* doctype) {
   if (doctype->force_quirks || strcmp(doctype->name, kDoctypeHtml.data) ||
       is_in_static_list(
           doctype->public_identifier, kQuirksModePublicIdPrefixes, false) ||
@@ -1443,8 +1425,7 @@ static bool has_node_in_scope(GumboParser* parser, const GumboNode* node) {
 
 // Like has_an_element_in_scope, but restricts the expected qualified name to a
 // range of possible qualified names instead of just a single one.
-static bool has_an_element_in_scope_with_tagname(
-    GumboParser* parser, int expected_len, const GumboTag expected[]) {
+static bool has_an_element_in_scope_with_tagname(GumboParser* parser, int expected_len, const GumboTag expected[]) {
   return has_an_element_in_specific_scope(parser, expected_len, expected, false,
       (gumbo_tagset){TAG(APPLET), TAG(CAPTION), TAG(HTML), TAG(TABLE), TAG(TD),
           TAG(TH), TAG(MARQUEE), TAG(OBJECT), TAG(TEMPLATE), TAG_MATHML(MI),
@@ -1528,8 +1509,7 @@ static bool close_table(GumboParser* parser) {
 
 // This factors out the clauses relating to "act as if an end tag token with tag
 // name `cell_tag` had been seen".
-static bool close_table_cell(
-    GumboParser* parser, const GumboToken* token, GumboTag cell_tag) {
+static bool close_table_cell(GumboParser* parser, const GumboToken* token, GumboTag cell_tag) {
   bool result = true;
   generate_implied_end_tags(parser, GUMBO_TAG_LAST);
   const GumboNode* node = get_current_node(parser);
@@ -1633,8 +1613,7 @@ static bool implicitly_close_tags(GumboParser* parser, GumboToken* token,
 // a </p> tag was encountered, implicitly closing tags.  Returns false if a
 // parse error occurs.  This is a convenience function because this particular
 // clause appears several times in the spec.
-static bool maybe_implicitly_close_p_tag(
-    GumboParser* parser, GumboToken* token) {
+static bool maybe_implicitly_close_p_tag(GumboParser* parser, GumboToken* token) {
   if (has_an_element_in_button_scope(parser, GUMBO_TAG_P)) {
     return implicitly_close_tags(
         parser, token, GUMBO_NAMESPACE_HTML, GUMBO_TAG_P);
@@ -1644,8 +1623,7 @@ static bool maybe_implicitly_close_p_tag(
 
 // Convenience function to encapsulate the logic for closing <li> or <dd>/<dt>
 // tags.  Pass true to is_li for handling <li> tags, false for <dd> and <dt>.
-static void maybe_implicitly_close_list_tag(
-    GumboParser* parser, GumboToken* token, bool is_li) {
+static void maybe_implicitly_close_list_tag(GumboParser* parser, GumboToken* token, bool is_li) {
   GumboParserState* state = parser->_parser_state;
   state->_frameset_ok = false;
   for (int i = state->_open_elements.length; --i >= 0;) {
@@ -1765,8 +1743,7 @@ static bool doctype_matches(const GumboTokenDocType* doctype,
          !strcmp(doctype->system_identifier, system_id->data);
 }
 
-static bool maybe_add_doctype_error(
-    GumboParser* parser, const GumboToken* token) {
+static bool maybe_add_doctype_error(GumboParser* parser, const GumboToken* token) {
   const GumboTokenDocType* doctype = &token->v.doc_type;
   bool html_doctype = !strcmp(doctype->name, kDoctypeHtml.data);
   if ((!html_doctype || doctype->has_public_identifier ||
@@ -1811,8 +1788,7 @@ static void remove_from_parent(GumboParser* parser, GumboNode* node) {
 
 // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-end.html#an-introduction-to-error-handling-and-strange-cases-in-the-parser
 // Also described in the "in body" handling for end formatting tags.
-static bool adoption_agency_algorithm(
-    GumboParser* parser, GumboToken* token, GumboTag subject) {
+static bool adoption_agency_algorithm(GumboParser* parser, GumboToken* token, GumboTag subject) {
   GumboParserState* state = parser->_parser_state;
   gumbo_debug("Entering adoption agency algorithm.\n");
   // Step 1.
@@ -3842,8 +3818,7 @@ static bool handle_after_after_body(GumboParser* parser, GumboToken* token) {
 }
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#the-after-after-frameset-insertion-mode
-static bool handle_after_after_frameset(
-    GumboParser* parser, GumboToken* token) {
+static bool handle_after_after_frameset(GumboParser* parser, GumboToken* token) {
   if (token->type == GUMBO_TOKEN_COMMENT) {
     append_comment_node(parser, get_document_node(parser), token);
     return true;
@@ -4065,8 +4040,7 @@ static bool handle_token(GumboParser* parser, GumboToken* token) {
   }
 }
 
-static void fragment_parser_init(GumboParser* parser, GumboTag fragment_ctx,
-    GumboNamespaceEnum fragment_namespace) {
+static void fragment_parser_init(GumboParser* parser, GumboTag fragment_ctx, GumboNamespaceEnum fragment_namespace) {
   GumboNode* root;
   assert(fragment_ctx != GUMBO_TAG_LAST);
 
@@ -4130,8 +4104,7 @@ GumboOutput* gumbo_parse(const char* buffer) {
       &kGumboDefaultOptions, buffer, strlen(buffer));
 }
 
-GumboOutput* gumbo_parse_with_options(
-    const GumboOptions* options, const char* buffer, size_t length) {
+GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* buffer, size_t length) {
   GumboParser parser;
   parser._options = options;
   output_init(&parser);

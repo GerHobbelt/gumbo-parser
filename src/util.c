@@ -22,6 +22,7 @@
 #include "string_util.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "gumbo.h"
 #include "parser.h"
@@ -40,7 +41,7 @@ void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
 }
 
 void* gumbo_parser_reallocate(struct GumboInternalParser* parser, void* ptr, size_t new_num_bytes, size_t old_num_bytes) {
-  parser->_options->reallocator(parser->_options->userdata, ptr, new_num_bytes, old_num_bytes);
+  return parser->_options->reallocator(parser->_options->userdata, ptr, new_num_bytes, old_num_bytes);
 }
 
 bool gumbo_str_to_positive_integer(const char *str, int len, int *out) {
@@ -125,6 +126,26 @@ bool gumbo_isalnum(unsigned char ch)
   if ('A' <= ch && ch <= 'Z') return true;
   if ('0' <= ch && ch <= '9') return true;
   return false;
+}
+
+int gumbo_strcasecmp(const char* str1, const char* str2) {
+  if (!str1)
+		str1 = "";
+  if (!str2)
+		str2 = "";
+  for (;;) {
+    uint8_t c1 = *str1++;
+    uint8_t c2 = *str2++;
+    c1 = gumbo_tolower(c1);
+    c2 = gumbo_tolower(c2);
+    if (c1 < c2)
+			return -1;
+    if (c1 > c2)
+			return 1;
+		// c1 == c2; now see if we hit the end of the string(s):
+    if (!c1)
+			return 0;
+	}
 }
 
 // Debug function to trace operation of the parser.  Pass --copts=-DGUMBO_DEBUG
