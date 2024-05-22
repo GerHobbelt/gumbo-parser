@@ -68,9 +68,27 @@ static inline bool gumbo_isalpha(int c)
   return (c | 0x20) >= 'a' && (c | 0x20) <= 'z';
 }
 
-bool gumbo_isspace(unsigned char ch);
+static inline bool gumbo_isspace(unsigned char ch) 
+{
+  switch(ch) {
+  case ' ':
+  case '\f':
+  case '\r':
+  case '\n':
+  case '\t':
+    return true;
+  default:
+    return false;
+  }
+}
 
-bool gumbo_isalnum(unsigned char ch);
+static inline bool gumbo_isalnum(unsigned char ch) 
+{
+  if ('a' <= ch && ch <= 'z') return true;
+  if ('A' <= ch && ch <= 'Z') return true;
+  if ('0' <= ch && ch <= '9') return true;
+  return false;
+}
 
 // Returns -1 if string1 is less than string2; 1 if string1 is greater than string2, and 0 if they are equal.
 int gumbo_strcasecmp(const char* string1, const char* string2);

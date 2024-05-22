@@ -103,31 +103,6 @@ char* gumbo_copy_stringz(GumboParser* parser, const char* str) {
   return buffer;
 }
 
-// replace locale specific ctype functions to properly adhere
-// to spec
-
-bool gumbo_isspace(unsigned char ch) 
-{
-  switch(ch) {
-  case ' ':
-  case '\f':
-  case '\r':
-  case '\n':
-  case '\t':
-    return true;
-  default:
-    return false;
-  }
-}
-
-bool gumbo_isalnum(unsigned char ch) 
-{
-  if ('a' <= ch && ch <= 'z') return true;
-  if ('A' <= ch && ch <= 'Z') return true;
-  if ('0' <= ch && ch <= '9') return true;
-  return false;
-}
-
 int gumbo_strcasecmp(const char* str1, const char* str2) {
   if (!str1)
 		str1 = "";
