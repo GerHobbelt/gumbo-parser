@@ -19,13 +19,16 @@
 
 #ifndef GUMBO_UTIL_H_
 #define GUMBO_UTIL_H_
+
 #ifdef _MSC_VER
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 #endif
+
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,9 +81,31 @@ bool gumbo_str_to_positive_integer(const char *str, int len, int *out);
 // translate string to double
 bool gumbo_str_to_double(const char *str, int len, double *out);
 
+#if defined(NO_GUMBO_DEBUG)
+#undef GUMBO_DEBUG
+#elif !defined(GUMBO_DEBUG)
+#if !defined(NDEBUG) || defined(_DEBUG)
+#define GUMBO_DEBUG    1
+#else
+#define GUMBO_DEBUG    1
+#endif
+#endif
+
+// Print debugging info to stderr.
+void gumbo_vdebug(const char* format, va_list args);
+
 // Debug wrapper for printf, to make it easier to turn off debugging info when
 // required.
-void gumbo_debug(const char* format, ...);
+static inline void gumbo_debug(const char* format, ...) {
+#if defined(GUMBO_DEBUG)
+  va_list args;
+  va_start(args, format);
+  gumbo_vdebug(format, args);
+  va_end(args);
+#else
+  // nada
+#endif
+}
 
 #ifdef __cplusplus
 }

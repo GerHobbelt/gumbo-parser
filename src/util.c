@@ -150,12 +150,7 @@ int gumbo_strcasecmp(const char* str1, const char* str2) {
 
 // Debug function to trace operation of the parser.  Pass --copts=-DGUMBO_DEBUG
 // to use.
-void gumbo_debug(const char* format, ...) {
-#ifdef GUMBO_DEBUG
-  va_list args;
-  va_start(args, format);
-  vprintf(format, args);
-  va_end(args);
-  fflush(stdout);
-#endif
+void gumbo_vdebug(const char* format, va_list args) {
+  vfprintf(stderr, format, args);
+  //fflush(stdout);
 }
