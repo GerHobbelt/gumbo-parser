@@ -343,7 +343,12 @@ static XpathSegType gumbo_do_filter(GumboParser *parser, GumboVector *src_nodes,
                     continue;
                 }
                 filter_num = filter_vector->length;
-                XpathFilter filters[filter_num];
+                //XpathFilter filters[filter_num];
+                XpathFilter filters_100[100];
+                XpathFilter *filters = filters_100;
+                if (filter_num > 100)
+                  filters = malloc(filter_num * sizeof(filters[0]));
+
                 for (i = 0; i < filter_num; i++) {
                     filter = filter_vector->data[i];
                     if (filter->type == NODE_NUMERIC || filter->type == NODE_STRING) {
@@ -411,6 +416,9 @@ static XpathSegType gumbo_do_filter(GumboParser *parser, GumboVector *src_nodes,
                 if (gumbo_is_filtered_ok(parser, filters, filter_num)) {
                     CONFIRM_DOC_NODE(src_node, dsts);
                 }
+
+								if (filters != filters_100)
+									free(filters);
             } 
         } else {
             GumboVector *attrs = &src_node->v.element.attributes;
