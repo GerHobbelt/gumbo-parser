@@ -164,7 +164,7 @@ static bool consume_numeric_ref(
   int codepoint = 0;
   bool status = true;
   do {
-    // detect and prevent numeric overflow see original PR #384 
+    // detect and prevent numeric overflow; see original PR #384 
     if (codepoint <= 0x10ffff) codepoint = (codepoint * (is_hex ? 16 : 10)) + digit;
     utf8iterator_next(input);
     digit = parse_digit(utf8iterator_current(input), is_hex);
