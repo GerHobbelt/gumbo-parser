@@ -64,4 +64,5 @@ int main(int argc, const char** argv) {
   gumbo_vector_destroy(&parser, &nodes);
   gumbo_destroy_output(&kGumboDefaultOptions, output);
   free(input);
+  return 0;
 }
