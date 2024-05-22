@@ -168,6 +168,24 @@ static void LeakDetectingFree(void* userdata, void* ptr) {
   }
 }
 
+static void* LeakDetectingRealloc(void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes) {
+  MallocStats* stats = static_cast<MallocStats*>(userdata);
+  stats->bytes_allocated += new_num_bytes;
+  ++stats->objects_allocated;
+  // Arbitrary limit of 2G on allocation; parsing any reasonable document
+  // shouldn't take more than that.
+  assert(stats->bytes_allocated < (1 << 31));
+  void* obj = malloc(new_num_bytes);
+  // gumbo_debug("Allocated %u bytes at %x.\n", new_num_bytes, obj);
+
+	memcpy(obj, ptr, old_num_bytes);
+
+	++stats->objects_freed;
+  // gumbo_debug("Freed %x.\n");
+  free(ptr);
+  return obj;
+}
+
 void InitLeakDetection(GumboOptions* options, MallocStats* stats) {
   stats->bytes_allocated = 0;
   stats->objects_allocated = 0;
@@ -175,6 +193,7 @@ void InitLeakDetection(GumboOptions* options, MallocStats* stats) {
 
   options->allocator = LeakDetectingMalloc;
   options->deallocator = LeakDetectingFree;
+  options->reallocator = LeakDetectingRealloc;
   options->userdata = stats;
 }
 

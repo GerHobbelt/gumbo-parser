@@ -62,14 +62,26 @@ static GumboInsertionMode get_current_template_insertion_mode(
 static bool handle_in_template(GumboParser*, GumboToken*);
 static void destroy_node(GumboParser*, GumboNode*);
 
-static void* malloc_wrapper(void* unused, size_t size) { return malloc(size); }
+static void* malloc_wrapper(void* unused, size_t size) {
+	return malloc(size);
+}
 
-static void free_wrapper(void* unused, void* ptr) { free(ptr); }
+static void free_wrapper(void* unused, void* ptr) {
+	free(ptr);
+}
+
+static void* realloc_wrapper(void* unused, void* ptr, size_t new_num_bytes, size_t old_num_bytes) {
+	return realloc(ptr, new_num_bytes);
+}
 
 // Set kDefaultGumboOptions field max_errors to default to 50 (not -1) to 
 // prevent Quadratic time and memory use with many unclosed tags
 // https://github.com/google/gumbo-parser/issues/391
-const GumboOptions kGumboDefaultOptions = {&malloc_wrapper, &free_wrapper, NULL,
+const GumboOptions kGumboDefaultOptions = {
+  .allocator = &malloc_wrapper,
+  .deallocator = &free_wrapper,
+  .deallocator = &realloc_wrapper,
+  .userdata = NULL,
   .tab_stop = 8,
   .stop_on_first_error = false,
   .max_tree_depth = 400,
@@ -140,12 +152,8 @@ static const GumboStringPiece kQuirksModePublicIdPrefixes[] = {
     GUMBO_STRING("-//O'Reilly and Associates//DTD HTML 2.0//"),
     GUMBO_STRING("-//O'Reilly and Associates//DTD HTML Extended 1.0//"),
     GUMBO_STRING("-//O'Reilly and Associates//DTD HTML Extended Relaxed 1.0//"),
-    GUMBO_STRING(
-        "-//SoftQuad Software//DTD HoTMetaL PRO 6.0::19990601::)"
-        "extensions to HTML 4.0//"),
-    GUMBO_STRING(
-        "-//SoftQuad//DTD HoTMetaL PRO 4.0::19971010::"
-        "extensions to HTML 4.0//"),
+    GUMBO_STRING("-//SoftQuad Software//DTD HoTMetaL PRO 6.0::19990601::)extensions to HTML 4.0//"),
+    GUMBO_STRING("-//SoftQuad//DTD HoTMetaL PRO 4.0::19971010::extensions to HTML 4.0//"),
     GUMBO_STRING("-//Spyglass//DTD HTML 2.0 Extended//"),
     GUMBO_STRING("-//SQ//DTD HTML 2.0 HoTMetaL + extensions//"),
     GUMBO_STRING("-//Sun Microsystems Corp.//DTD HotJava HTML//"),
@@ -206,8 +214,7 @@ static const ReplacementEntry kSvgAttributeReplacements[] = {
     // REPLACEMENT_ENTRY("contentstyletype", "contentStyleType"),
     REPLACEMENT_ENTRY("diffuseconstant", "diffuseConstant"),
     REPLACEMENT_ENTRY("edgemode", "edgeMode"),
-    // REPLACEMENT_ENTRY("externalresourcesrequired",
-    // "externalResourcesRequired"),
+    // REPLACEMENT_ENTRY("externalresourcesrequired", "externalResourcesRequired"),
     // REPLACEMENT_ENTRY("filterres", "filterRes"),
     REPLACEMENT_ENTRY("filterunits", "filterUnits"),
     REPLACEMENT_ENTRY("glyphref", "glyphRef"),
@@ -491,8 +498,7 @@ static void output_init(GumboParser* parser) {
 }
 
 static void parser_state_init(GumboParser* parser) {
-  GumboParserState* parser_state =
-      gumbo_parser_allocate(parser, sizeof(GumboParserState));
+  GumboParserState* parser_state = gumbo_parser_allocate(parser, sizeof(GumboParserState));
   parser_state->_insertion_mode = GUMBO_INSERTION_MODE_INITIAL;
   parser_state->_reprocess_current_token = false;
   parser_state->_frameset_ok = true;
@@ -679,14 +685,12 @@ static GumboError* parser_add_parse_error(
   }
   GumboParserState* state = parser->_parser_state;
   extra_data->parser_state = state->_insertion_mode;
-  gumbo_vector_init(
-      parser, state->_open_elements.length, &extra_data->tag_stack);
+  gumbo_vector_init(parser, state->_open_elements.length, &extra_data->tag_stack);
   for (unsigned int i = 0; i < state->_open_elements.length; ++i) {
     const GumboNode* node = state->_open_elements.data[i];
     assert(
         node->type == GUMBO_NODE_ELEMENT || node->type == GUMBO_NODE_TEMPLATE);
-    gumbo_vector_add(
-        parser, (void*)(intptr_t) node->v.element.tag, &extra_data->tag_stack);
+    gumbo_vector_add(parser, (void*)(intptr_t) node->v.element.tag, &extra_data->tag_stack);
   }
   return error;
 }
@@ -730,8 +734,7 @@ static bool node_tag_in_set(const GumboNode* node, const gumbo_tagset tags) {
 }
 
 // Like node_tag_in, but for the single-tag case.
-static bool node_qualified_tag_is(
-    const GumboNode* node, GumboNamespaceEnum ns, GumboTag tag) {
+static bool node_qualified_tag_is(const GumboNode* node, GumboNamespaceEnum ns, GumboTag tag) {
   assert(node);
   return (node->type == GUMBO_NODE_ELEMENT ||
              node->type == GUMBO_NODE_TEMPLATE) &&
@@ -843,8 +846,7 @@ InsertionLocation get_appropriate_insertion_location(
 
 // Appends a node to the end of its parent, setting the "parent" and
 // "index_within_parent" fields appropriately.
-static void append_node(
-    GumboParser* parser, GumboNode* parent, GumboNode* node) {
+static void append_node(GumboParser* parser, GumboNode* parent, GumboNode* node) {
   assert(node->parent == NULL);
   assert(node->index_within_parent == -1);
   GumboVector* children;
@@ -910,8 +912,7 @@ static void maybe_flush_text_node_buffer(GumboParser* parser) {
          buffer_state->_type == GUMBO_NODE_CDATA);
   GumboNode* text_node = create_node(parser, buffer_state->_type);
   GumboText* text_node_data = &text_node->v.text;
-  text_node_data->text =
-      gumbo_string_buffer_to_string(parser, &buffer_state->_buffer);
+  text_node_data->text = gumbo_string_buffer_to_string(parser, &buffer_state->_buffer);
   text_node_data->original_text.data = buffer_state->_start_original_text;
   text_node_data->original_text.length =
       state->_current_token->original_text.data -
@@ -1086,8 +1087,7 @@ static void insert_element(GumboParser* parser, GumboNode* node,
 // node.  Returns the node inserted.
 static GumboNode* insert_element_from_token(
     GumboParser* parser, GumboToken* token) {
-  GumboNode* element =
-      create_element_from_token(parser, token, GUMBO_NAMESPACE_HTML);
+  GumboNode* element = create_element_from_token(parser, token, GUMBO_NAMESPACE_HTML);
   insert_element(parser, element, false);
   gumbo_debug("Inserting <%s> element (@%x) from token.\n",
       gumbo_normalized_tagname(element->v.element.tag), element);
@@ -1245,8 +1245,7 @@ static bool is_open_element(GumboParser* parser, const GumboNode* node) {
 // Clones attributes, tags, etc. of a node, but does not copy the content.  The
 // clone shares no structure with the original node: all owned strings and
 // values are fresh copies.
-GumboNode* clone_node(
-    GumboParser* parser, GumboNode* node, GumboParseFlags reason) {
+GumboNode* clone_node(GumboParser* parser, GumboNode* node, GumboParseFlags reason) {
   assert(node->type == GUMBO_NODE_ELEMENT || node->type == GUMBO_NODE_TEMPLATE);
   GumboNode* new_node = gumbo_parser_allocate(parser, sizeof(GumboNode));
   *new_node = *node;
@@ -1263,8 +1262,7 @@ GumboNode* clone_node(
   gumbo_vector_init(parser, old_attributes->length, &element->attributes);
   for (unsigned int i = 0; i < old_attributes->length; ++i) {
     const GumboAttribute* old_attr = old_attributes->data[i];
-    GumboAttribute* attr =
-        gumbo_parser_allocate(parser, sizeof(GumboAttribute));
+    GumboAttribute* attr = gumbo_parser_allocate(parser, sizeof(GumboAttribute));
     *attr = *old_attr;
     attr->name = gumbo_copy_stringz(parser, old_attr->name);
     attr->value = gumbo_copy_stringz(parser, old_attr->value);
@@ -1319,8 +1317,7 @@ static void reconstruct_active_formatting_elements(GumboParser* parser) {
     InsertionLocation location =
         get_appropriate_insertion_location(parser, NULL);
     insert_node(parser, clone, location);
-    gumbo_vector_add(
-        parser, (void*) clone, &parser->_parser_state->_open_elements);
+    gumbo_vector_add(parser, (void*) clone, &parser->_parser_state->_open_elements);
 
     // Step 10.
     elements->data[i] = clone;
@@ -1669,8 +1666,7 @@ static void maybe_implicitly_close_list_tag(
   }
 }
 
-static void merge_attributes(
-    GumboParser* parser, GumboToken* token, GumboNode* node) {
+static void merge_attributes(GumboParser* parser, GumboToken* token, GumboNode* node) {
   assert(token->type == GUMBO_TOKEN_START_TAG);
   assert(node->type == GUMBO_NODE_ELEMENT);
   const GumboVector* token_attr = &token->v.start_tag.attributes;
@@ -1736,8 +1732,7 @@ static void adjust_foreign_attributes(GumboParser* parser, GumboToken* token) {
 static void adjust_svg_attributes(GumboParser* parser, GumboToken* token) {
   assert(token->type == GUMBO_TOKEN_START_TAG);
   const GumboVector* attributes = &token->v.start_tag.attributes;
-  for (size_t i = 0;
-       i < sizeof(kSvgAttributeReplacements) / sizeof(ReplacementEntry); ++i) {
+  for (size_t i = 0; i < sizeof(kSvgAttributeReplacements) / sizeof(ReplacementEntry); ++i) {
     const ReplacementEntry* entry = &kSvgAttributeReplacements[i];
     GumboAttribute* attr = gumbo_get_attribute(attributes, entry->from.data);
     if (!attr) {
@@ -1864,8 +1859,7 @@ static bool adoption_agency_algorithm(
     if (formatting_node_in_open_elements == -1) {
       gumbo_debug("Formatting node not on stack of open elements.\n");
       parser_add_parse_error(parser, token);
-      gumbo_vector_remove(
-          parser, formatting_node, &state->_active_formatting_elements);
+      gumbo_vector_remove(parser, formatting_node, &state->_active_formatting_elements);
       return false;
     }
 
@@ -1903,8 +1897,7 @@ static bool adoption_agency_algorithm(
       }
       // And the formatting element itself.
       pop_current_node(parser);
-      gumbo_vector_remove(
-          parser, formatting_node, &state->_active_formatting_elements);
+      gumbo_vector_remove(parser, formatting_node, &state->_active_formatting_elements);
       return false;
     }
     assert(!node_html_tag_is(furthest_block, GUMBO_TAG_HTML));

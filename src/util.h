@@ -50,6 +50,10 @@ void* gumbo_parser_allocate(struct GumboInternalParser* parser, size_t num_bytes
 // config options.
 void gumbo_parser_deallocate(struct GumboInternalParser* parser, void* ptr);
 
+// Resize (reallocate) a chunk of memory, using the allocator specified in the Parser's
+// config options.
+void* gumbo_parser_reallocate(struct GumboInternalParser* parser, void* ptr, size_t new_num_bytes, size_t old_num_bytes);
+
 // non-locale specific replacements for ctype.h functions needed for spec
 static inline int gumbo_tolower(int c)
 {

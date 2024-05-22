@@ -575,6 +575,12 @@ typedef void* (*GumboAllocatorFunction)(void* userdata, size_t size);
 typedef void (*GumboDeallocatorFunction)(void* userdata, void* ptr);
 
 /**
+ * The type for a resize/reallocator function.  Takes the 'userdata' member of the
+ * GumboParser struct as its first argument.
+ */
+typedef void (*GumboReallocatorFunction)(void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes);
+
+/**
  * Input struct containing configuration options for the parser.
  * These let you specify alternate memory managers, provide different error
  * handling, etc.
@@ -586,6 +592,9 @@ typedef struct GumboInternalOptions {
 
   /** A memory deallocator function. Default: free. */
   GumboDeallocatorFunction deallocator;
+
+  /** A memory resize/reallocator function. Default: realloc. */
+  GumboDeallocatorFunction reallocator;
 
   /**
    * An opaque object that's passed in as the first argument to all callbacks

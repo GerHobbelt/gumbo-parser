@@ -39,6 +39,10 @@ void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
   parser->_options->deallocator(parser->_options->userdata, ptr);
 }
 
+void* gumbo_parser_reallocate(struct GumboInternalParser* parser, void* ptr, size_t new_num_bytes, size_t old_num_bytes) {
+  parser->_options->reallocator(parser->_options->userdata, ptr, new_num_bytes, old_num_bytes);
+}
+
 bool gumbo_str_to_positive_integer(const char *str, int len, int *out) {
     int i = 0, ret = 0;
     if (!str || len <= 0) {
