@@ -524,8 +524,7 @@ static StateResult emit_current_tag(GumboParser* parser, GumboToken* output) {
     output->v.start_tag.is_self_closing = tag_state->_is_self_closing;
     tag_state->_last_start_tag = tag_state->_tag;
     mark_tag_state_as_empty(tag_state);
-    gumbo_debug(
-        "Emitted start tag %s.\n", gumbo_normalized_tagname(tag_state->_tag));
+    gumbo_debug("Emitted start tag %s.\n", gumbo_normalized_tagname(tag_state->_tag));
   } else {
     output->type = GUMBO_TOKEN_END_TAG;
     output->v.end_tag = tag_state->_tag;
@@ -538,12 +537,11 @@ static StateResult emit_current_tag(GumboParser* parser, GumboToken* output) {
     }
     gumbo_parser_deallocate(parser, tag_state->_attributes.data);
     mark_tag_state_as_empty(tag_state);
-    gumbo_debug(
-        "Emitted end tag %s.\n", gumbo_normalized_tagname(tag_state->_tag));
+    gumbo_debug("Emitted end tag %s.\n", gumbo_normalized_tagname(tag_state->_tag));
   }
   gumbo_string_buffer_destroy(parser, &tag_state->_buffer);
   finish_token(parser, output);
-  gumbo_debug("Original text = %.*s.\n", output->original_text.length,
+  gumbo_debug("Original text = %.*s.\n", (int)output->original_text.length,
       output->original_text.data);
   assert(output->original_text.length >= 2);
   assert(output->original_text.data[0] == '<');
@@ -1175,8 +1173,7 @@ static StateResult handle_rawtext_end_tag_open_state(GumboParser* parser,
 static StateResult handle_rawtext_end_tag_name_state(GumboParser* parser,
     GumboTokenizerState* tokenizer, int c, GumboToken* output) {
   assert(tokenizer->_temporary_buffer.length >= 2);
-  gumbo_debug("Last end tag: %*s\n", (int) tokenizer->_tag_state._buffer.length,
-      tokenizer->_tag_state._buffer.data);
+  gumbo_debug("Last end tag: %s\n", gumbo_string_buffer_cstr(parser, &tokenizer->_tag_state._buffer));
   if (gumbo_isalpha(c)) {
     append_char_to_tag_buffer(parser, gumbo_tolower(c), true);
     append_char_to_temporary_buffer(parser, c);
@@ -2829,8 +2826,7 @@ bool gumbo_lex(GumboParser* parser, GumboToken* output) {
     assert(!tokenizer->_temporary_buffer_emit);
     assert(tokenizer->_buffered_emit_char == kGumboNoChar);
     int c = utf8iterator_current(&tokenizer->_input);
-    gumbo_debug(
-        "Lexing character '%c' (%d) in state %d.\n", c, c, tokenizer->_state);
+    gumbo_debug("Lexing character '%c' (%d) in state %d.\n", c, c, tokenizer->_state);
     StateResult result =
         dispatch_table[tokenizer->_state](parser, tokenizer, c, output);
     // We need to clear reconsume_current_input before returning to prevent

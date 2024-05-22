@@ -30,7 +30,7 @@
     } while(0);
 
 static XpathSeg *gumbo_new_xpath_seg(GumboParser* parser) {
-    XpathSeg *seg = (XpathSeg *)malloc(sizeof(XpathSeg));
+  XpathSeg *seg = (XpathSeg *)gumbo_parser_allocate(parser, sizeof(XpathSeg));
     seg->type = UNKNOWN_SEG;
     seg->is_deep_search = false;
     gumbo_string_buffer_init(parser, &seg->node_or_attr);
@@ -39,7 +39,7 @@ static XpathSeg *gumbo_new_xpath_seg(GumboParser* parser) {
 }
 
 static XpathFilter *gumbo_new_xpath_filter(GumboParser *parser, XpathFilterType filter_type) {
-    XpathFilter *filter = (XpathFilter *)malloc(sizeof(XpathFilter));
+  XpathFilter *filter = (XpathFilter *)gumbo_parser_allocate(parser, sizeof(XpathFilter));
     filter->type = filter_type;
     filter->op = NONE;
     filter->bool_value = false;
@@ -55,7 +55,7 @@ static void gumbo_free_xpath_filter(GumboParser *parser, XpathFilter *filter) {
         gumbo_string_buffer_destroy(parser, &filter->name);
         gumbo_string_buffer_destroy(parser, &filter->value);
     }
-    free(filter);
+    gumbo_parser_deallocate(parser, filter);
 }
 
 static void gumbo_free_xpath_seg(GumboParser *parser, XpathSeg *xpath_seg) {
@@ -65,7 +65,7 @@ static void gumbo_free_xpath_seg(GumboParser *parser, XpathSeg *xpath_seg) {
         gumbo_free_xpath_filter(parser, filter);
     }
     gumbo_vector_destroy(parser, &xpath_seg->filters);
-    free(xpath_seg);
+    gumbo_parser_deallocate(parser, xpath_seg);
 }
 
 static void gumbo_push_xpath_filter(GumboParser *parser, XpathFilter *filter, GumboVector *filters) {
@@ -347,7 +347,7 @@ static XpathSegType gumbo_do_filter(GumboParser *parser, GumboVector *src_nodes,
                 XpathFilter filters_100[100];
                 XpathFilter *filters = filters_100;
                 if (filter_num > 100)
-                  filters = malloc(filter_num * sizeof(filters[0]));
+									filters = gumbo_parser_allocate(parser, filter_num * sizeof(filters[0]));
 
                 for (i = 0; i < filter_num; i++) {
                     filter = filter_vector->data[i];
@@ -418,7 +418,7 @@ static XpathSegType gumbo_do_filter(GumboParser *parser, GumboVector *src_nodes,
                 }
 
 								if (filters != filters_100)
-									free(filters);
+									gumbo_parser_deallocate(parser, filters);
             } 
         } else {
             GumboVector *attrs = &src_node->v.element.attributes;
@@ -465,118 +465,115 @@ XpathSegType gumbo_eval_xpath_from_nodes(GumboParser* parser, GumboVector *doc_n
     return ret_type;
 }
 
-void gumbo_dup_xpath_segs(GumboVector *xpath_segs) {
+#if defined(GUMBO_DEBUG)
+
+void gumbo_dump_xpath_segs(GumboParser *parser, GumboVector *xpath_segs) {
     int i = 0, j = 0;
     for (i = 0; i < xpath_segs->length; i++) {
         XpathSeg *xpath_seg = (XpathSeg *)xpath_segs->data[i];
-        xpath_seg->node_or_attr.data[xpath_seg->node_or_attr.length] = '\0';
-        printf("%s(%d,%d)", xpath_seg->node_or_attr.data, xpath_seg->is_deep_search, xpath_seg->type);
+        gumbo_debug("%s(%d,%d)", gumbo_string_buffer_cstr(parser, &xpath_seg->node_or_attr), xpath_seg->is_deep_search, xpath_seg->type);
         GumboVector *filters = &xpath_seg->filters;
         if (filters->length > 0) {
-            printf("[");
+          gumbo_debug("[");
             for (j = 0; j < filters->length; j++) {
                 XpathFilter *filter = filters->data[j];
-                printf("%d:", filter->type);
+              gumbo_debug("%d:", filter->type);
                 switch(filter->type) {
                 case NODE_INDEX:
-                    printf("%d", filter->index);
+                    gumbo_debug("%d", filter->index);
                     break;
                 case NODE_NUMERIC:
-                    filter->name.data[filter->name.length] = '\0';
-                    printf("%s", filter->name.data);
+                  gumbo_debug("%s", gumbo_string_buffer_cstr(parser, &filter->name));
                     switch(filter->op) {
                     case LE:
-                        printf("<=");
+                        gumbo_debug("<=");
                         break;
                     case LT:
-                        printf("<");
+                      gumbo_debug("<");
                         break;
                     case GE:
-                        printf(">=");
+                      gumbo_debug(">=");
                         break;
                     case GT:
-                        printf(">");
+                      gumbo_debug(">");
                         break;
                     case NE:
-                        printf("!=");
+                      gumbo_debug("!=");
                         break;
                     case EQ:
-                        printf("=");
+                      gumbo_debug("=");
                         break;
                         default:
                             break;
                     }
-                    printf("%.02lf", filter->numeric_value);
+                    gumbo_debug("%.02lf", filter->numeric_value);
                     break;
                 case NODE_STRING:
-                    filter->name.data[filter->name.length] = '\0';
-                    printf("%s", filter->name.data);
+                  gumbo_debug("%s", gumbo_string_buffer_cstr(parser, &filter->name));
                     if (filter->op != NONE) {
                         if (filter->op != EQ) {
-                            printf("systax error\n");
+                        gumbo_debug(" :: syntax error\n");
                         } else {
-                            filter->value.data[filter->value.length] = '\0';
-                            printf("=%s", filter->value.data);
+                          gumbo_debug("=%s", gumbo_string_buffer_cstr(parser, &filter->value));
                         }
                     }
                     break;
                 case ATTR_NUMERIC:
-                    filter->name.data[filter->name.length] = '\0';
-                    printf("@%s", filter->name.data);
+                  gumbo_debug("@%s", gumbo_string_buffer_cstr(parser, &filter->name));
                     switch(filter->op) {
                     case LE:
-                        printf("<=");
+                        gumbo_debug("<=");
                         break;
                     case LT:
-                        printf("<");
+                      gumbo_debug("<");
                         break;
                     case GE:
-                        printf(">=");
+                      gumbo_debug(">=");
                         break;
                     case GT:
-                        printf(">");
+                      gumbo_debug(">");
                         break;
                     case NE:
-                        printf("!=");
+                      gumbo_debug("!=");
                         break;
                     case EQ:
-                        printf("=");
+                      gumbo_debug("=");
                         break;
                         default:
                             break;
                     }
-                    printf("%.02lf", filter->numeric_value);
+                    gumbo_debug("%.02lf", filter->numeric_value);
                     break;
                 case ATTR_STRING:
-                    filter->name.data[filter->name.length] = '\0';
-                    printf("@%s", filter->name.data);
+                  gumbo_debug("@%s", gumbo_string_buffer_cstr(parser, &filter->name));
                     if (filter->op != NONE) {
                         if (filter->op != EQ) {
-                            printf("systax error\n");
+                        gumbo_debug(" :: syntax error\n");
                         } else {
-                            filter->value.data[filter->value.length] = '\0';
-                            printf("=%s", filter->value.data);
+                          gumbo_debug("=%s", gumbo_string_buffer_cstr(parser, &filter->value));
                         }
                     }
                     break;
                 case LEFT_BRACKETS:
-                    printf("(");
+                  gumbo_debug("(");
                     break;
                 case RIGHT_BRACKETS:
-                    printf(")");
+                  gumbo_debug(")");
                     break;
                 case AND:
-                    printf(" and ");
+                  gumbo_debug(" and ");
                     break;
                 case OR:
-                    printf(" or ");
+                  gumbo_debug(" or ");
                     break;
                     default:
                         break;
                 }
             }
-            printf("]");
+            gumbo_debug("]");
         }
-        printf("\n");
+        gumbo_debug("\n");
     }
 }
+
+#endif

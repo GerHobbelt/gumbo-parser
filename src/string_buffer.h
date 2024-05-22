@@ -60,8 +60,11 @@ void gumbo_string_buffer_append_codepoint(struct GumboInternalParser* parser, in
 // Appends a string onto the end of the GumboStringBuffer.
 void gumbo_string_buffer_append_string(struct GumboInternalParser* parser, GumboStringPiece* str, GumboStringBuffer* output);
 
-// Converts this string buffer to const char*, alloctaing a new buffer for it.
+// Converts this string buffer to char*, allocating a new buffer for it.
 char* gumbo_string_buffer_to_string(struct GumboInternalParser* parser, GumboStringBuffer* input);
+
+// Converts this string buffer to a `const char*` C string in-buffer, i.e. without allocating it.
+const char* gumbo_string_buffer_cstr(struct GumboInternalParser* parser, GumboStringBuffer* input);
 
 // Reinitialize this string buffer.  This clears it by setting length=0.  It
 // does not zero out the buffer itself.

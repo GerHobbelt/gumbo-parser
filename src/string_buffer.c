@@ -96,6 +96,12 @@ char* gumbo_string_buffer_to_string(struct GumboInternalParser* parser, GumboStr
   return buffer;
 }
 
+const char* gumbo_string_buffer_cstr(struct GumboInternalParser* parser, GumboStringBuffer* input) {
+  maybe_resize_string_buffer(parser, 1, input);
+  input->data[input->length] = '\0';
+  return input->data;
+}
+
 void gumbo_string_buffer_clear(struct GumboInternalParser* parser, GumboStringBuffer* input) {
   input->length = 0;
   if (input->capacity > kDefaultStringBufferSize * 8) {

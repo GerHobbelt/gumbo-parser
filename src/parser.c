@@ -909,8 +909,7 @@ static void maybe_flush_text_node_buffer(GumboParser* parser) {
       buffer_state->_start_original_text;
   text_node_data->start_pos = buffer_state->_start_position;
 
-  gumbo_debug("Flushing text node buffer of %.*s.\n",
-      (int) buffer_state->_buffer.length, buffer_state->_buffer.data);
+  gumbo_debug("Flushing text node buffer of %s.\n", gumbo_string_buffer_cstr(parser, &buffer_state->_buffer));
 
   InsertionLocation location = get_appropriate_insertion_location(parser, NULL);
   if (location.target->type == GUMBO_NODE_DOCUMENT) {
@@ -1908,8 +1907,7 @@ static bool adoption_agency_algorithm(GumboParser* parser, GumboToken* token, Gu
       ++j;
       // Step 13.3.
       int node_index = gumbo_vector_index_of(&state->_open_elements, node);
-      gumbo_debug(
-          "Current index: %d, last index: %d.\n", node_index, saved_node_index);
+      gumbo_debug("Current index: %d, last index: %d.\n", node_index, saved_node_index);
       if (node_index == -1) {
         node_index = saved_node_index;
       }
@@ -2006,8 +2004,7 @@ static bool adoption_agency_algorithm(GumboParser* parser, GumboToken* token, Gu
         &state->_active_formatting_elements, formatting_node);
     assert(formatting_node_index != -1);
     if (formatting_node_index < bookmark) {
-      gumbo_debug(
-          "Formatting node at %d is before bookmark at %d; decrementing.\n",
+      gumbo_debug("Formatting node at %d is before bookmark at %d; decrementing.\n",
           formatting_node_index, bookmark);
       --bookmark;
     }
@@ -3958,7 +3955,7 @@ static bool handle_in_foreign_content(GumboParser* parser, GumboToken* token) {
       // case we do nothing) or we find the element that we're about to
       // close (in which case we pop everything we've seen until that
       // point.)
-      gumbo_debug("Foreign %.*s node at %d.\n", node_tagname.length,
+      gumbo_debug("Foreign %.*s node at %d.\n", (int)node_tagname.length,
           node_tagname.data, i);
       if (gumbo_string_equals_ignore_case(&node_tagname, &token_tagname)) {
         gumbo_debug("Matches.\n");
@@ -4117,7 +4114,7 @@ GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* b
   }
 
   GumboParserState* state = parser._parser_state;
-  gumbo_debug("Parsing %.*s.\n", length, buffer);
+  gumbo_debug("Parsing %.*s.\n", (int)length, buffer);
 
   // Sanity check so that infinite loops die with an assertion failure instead
   // of hanging the process before we ever get an error.
@@ -4154,7 +4151,7 @@ GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* b
       default:
         break;
     }
-    gumbo_debug("Handling %s token @%d:%d in state %d.\n", (char*) token_type,
+    gumbo_debug("Handling %s token @%d:%d in state %d.\n", token_type,
         token.position.line, token.position.column, state->_insertion_mode);
 
     state->_current_token = &token;
