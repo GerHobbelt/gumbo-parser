@@ -190,8 +190,11 @@ static const GumboStringPiece kLimitedQuirksRequiresSystemIdPublicIdPrefixes[] =
         GUMBO_STRING("-//W3C//DTD HTML 4.01 Transitional//"), TERMINATOR};
 
 // Indexed by GumboNamespaceEnum; keep in sync with that.
-static const char* kLegalXmlns[] = {"http://www.w3.org/1999/xhtml",
-    "http://www.w3.org/2000/svg", "http://www.w3.org/1998/Math/MathML"};
+static const char* kLegalXmlns[] = {
+  "http://www.w3.org/1999/xhtml",
+  "http://www.w3.org/2000/svg",
+  "http://www.w3.org/1998/Math/MathML"
+};
 
 typedef struct _ReplacementEntry {
   const GumboStringPiece from;
