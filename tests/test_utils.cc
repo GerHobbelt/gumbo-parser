@@ -153,7 +153,7 @@ static void* LeakDetectingMalloc(void* userdata, size_t size) {
   ++stats->objects_allocated;
   // Arbitrary limit of 2G on allocation; parsing any reasonable document
   // shouldn't take more than that.
-  assert(stats->bytes_allocated < (1 << 31));
+  assert(stats->bytes_allocated < (1UL << 31));
   void* obj = malloc(size);
   // gumbo_debug("Allocated %u bytes at %x.\n", size, obj);
   return obj;
@@ -174,7 +174,7 @@ static void* LeakDetectingRealloc(void* userdata, void* ptr, size_t new_num_byte
   ++stats->objects_allocated;
   // Arbitrary limit of 2G on allocation; parsing any reasonable document
   // shouldn't take more than that.
-  assert(stats->bytes_allocated < (1 << 31));
+  assert(stats->bytes_allocated < (1UL << 31));
   void* obj = malloc(new_num_bytes);
   // gumbo_debug("Allocated %u bytes at %x.\n", new_num_bytes, obj);
 
