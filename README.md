@@ -147,7 +147,7 @@ Within your program, you need to include "gumbo.h" and then issue a call to
 ```C
 #include "gumbo.h"
 
-int main() {
+int main(void) {
   GumboOutput* output = gumbo_parse("<h1>Hello, World!</h1>");
   // Do stuff with output->root
   gumbo_destroy_output(&kGumboDefaultOptions, output);
