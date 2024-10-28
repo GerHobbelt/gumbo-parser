@@ -28,3 +28,12 @@ sudo cmake CMakeLists.txt
 sudo make
 sudo cp *.a /usr/lib
 ```
+
+## html5lib-tests
+
+```
+git submodule update --init
+```
+```
+python3 python/gumbo/html5lib_adapter_test.py
+```
