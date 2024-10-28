@@ -291,17 +291,16 @@ typedef struct _NamespacedAttributeReplacement {
 
 static const NamespacedAttributeReplacement kForeignAttributeReplacements[] = {
     {"xlink:actuate", "actuate", GUMBO_ATTR_NAMESPACE_XLINK},
-    {"xlink:actuate", "actuate", GUMBO_ATTR_NAMESPACE_XLINK},
-    {"xlink:href", "href", GUMBO_ATTR_NAMESPACE_XLINK},
-    {"xlink:role", "role", GUMBO_ATTR_NAMESPACE_XLINK},
-    {"xlink:show", "show", GUMBO_ATTR_NAMESPACE_XLINK},
-    {"xlink:title", "title", GUMBO_ATTR_NAMESPACE_XLINK},
-    {"xlink:type", "type", GUMBO_ATTR_NAMESPACE_XLINK},
-    {"xml:base", "base", GUMBO_ATTR_NAMESPACE_XML},
-    {"xml:lang", "lang", GUMBO_ATTR_NAMESPACE_XML},
-    {"xml:space", "space", GUMBO_ATTR_NAMESPACE_XML},
-    {"xmlns", "xmlns", GUMBO_ATTR_NAMESPACE_XMLNS},
-    {"xmlns:xlink", "xlink", GUMBO_ATTR_NAMESPACE_XMLNS},
+    {"xlink:arcrole", "arcrole", GUMBO_ATTR_NAMESPACE_XLINK},
+    {"xlink:href",    "href",    GUMBO_ATTR_NAMESPACE_XLINK},
+    {"xlink:role",    "role",    GUMBO_ATTR_NAMESPACE_XLINK},
+    {"xlink:show",    "show",    GUMBO_ATTR_NAMESPACE_XLINK},
+    {"xlink:title",   "title",   GUMBO_ATTR_NAMESPACE_XLINK},
+    {"xlink:type",    "type",    GUMBO_ATTR_NAMESPACE_XLINK},
+    {"xml:lang",      "lang",    GUMBO_ATTR_NAMESPACE_XML},
+    {"xml:space",     "space",   GUMBO_ATTR_NAMESPACE_XML},
+    {"xmlns",         "xmlns",   GUMBO_ATTR_NAMESPACE_XMLNS},
+    {"xmlns:xlink",   "xlink",   GUMBO_ATTR_NAMESPACE_XMLNS},
 };
 
 // The "scope marker" for the list of active formatting elements.  We use a
