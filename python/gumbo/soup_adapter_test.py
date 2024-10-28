@@ -35,34 +35,34 @@ class SoupAdapterTest(unittest.TestCase):
         """)
 
     head = soup.head
-    self.assertEquals(soup, head.parent.parent)
-    self.assertEquals(u'head', head.name)
-    self.assertEquals(0, len(head))
+    self.assertEqual(soup, head.parent.parent)
+    self.assertEqual(u'head', head.name)
+    self.assertEqual(0, len(head))
 
     body = soup.body
-    self.assertEquals(head, body.previousSibling)
-    self.assertEquals(2, len(body))  # <ul> + trailing whitespace
-    self.assertEquals(u'ul', body.contents[0].name)
-    self.assertEquals(body, head.next)
-    self.assertEquals(head, body.previous)
+    self.assertEqual(head, body.previousSibling)
+    self.assertEqual(2, len(body))  # <ul> + trailing whitespace
+    self.assertEqual(u'ul', body.contents[0].name)
+    self.assertEqual(body, head.next)
+    self.assertEqual(head, body.previous)
 
     list_items = body.findAll('li')
-    self.assertEquals(4, len(list_items))
+    self.assertEqual(4, len(list_items))
 
     evens = body('li', 'even')
-    self.assertEquals(2, len(evens))
+    self.assertEqual(2, len(evens))
 
     a2 = body.find('a', href='two.html')
-    self.assertEquals(u'a', a2.name)
-    self.assertEquals(u'Two', a2.contents[0])
-    self.assertEquals(a2, evens[0].next)
-    self.assertEquals(evens[0], a2.previous)
+    self.assertEqual(u'a', a2.name)
+    self.assertEqual(u'Two', a2.contents[0])
+    self.assertEqual(a2, evens[0].next)
+    self.assertEqual(evens[0], a2.previous)
 
     li2 = a2.parent
-    self.assertEquals(u'li', li2.name)
-    self.assertEquals(u'even', li2['class'])
-    self.assertEquals(list_items[1], li2)
-    self.assertEquals(evens[0], li2)
+    self.assertEqual(u'li', li2.name)
+    self.assertEqual(u'even', li2['class'])
+    self.assertEqual(list_items[1], li2)
+    self.assertEqual(evens[0], li2)
 
 if __name__ == '__main__':
   unittest.main()

@@ -28,6 +28,8 @@ import ctypes
 import os.path
 from gumbo import gumboc_tags
 
+DONT_WE_LIKE_PYTHON = sys.version_info[0] == 2
+
 _name_of_lib = 'libgumbo.so'
 if sys.platform.startswith('darwin'):
   _name_of_lib = 'libgumbo.dylib'
@@ -113,7 +115,9 @@ class StringPiece(ctypes.Structure):
     return self.length
 
   def __str__(self):
-    return ctypes.string_at(self.data, self.length)
+    if DONT_WE_LIKE_PYTHON:
+      return ctypes.string_at(self.data, self.length)
+    return ctypes.string_at(self.data, self.length).decode('utf-8')
 
 
 class SourcePosition(ctypes.Structure):
@@ -273,11 +277,15 @@ class Element(ctypes.Structure):
     if self.tag_namespace == Namespace.SVG:
       svg_tagname = _normalize_svg_tagname(ctypes.byref(original_tag))
       if svg_tagname is not None:
-        return str(svg_tagname)
+        if DONT_WE_LIKE_PYTHON:
+          return str(svg_tagname)
+        return bytes(svg_tagname)
     if self.tag == Tag.UNKNOWN:
       if original_tag.data is None:
         return ''
-      return str(original_tag).lower()
+      if DONT_WE_LIKE_PYTHON:
+        return str(original_tag).lower()
+      return str(original_tag).lower().encode('utf-8')
     return _tagname(self.tag)
 
   def __repr__(self):
