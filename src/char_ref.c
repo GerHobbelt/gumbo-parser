@@ -135,7 +135,7 @@ static bool consume_numeric_ref(
     return false;
   }
 
-  int codepoint = 0;
+  unsigned int codepoint = 0;
   bool status = true;
   do {
     // detect and prevent numeric overflow see original PR #384
