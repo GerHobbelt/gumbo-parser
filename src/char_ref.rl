@@ -25,7 +25,6 @@
 #include "char_ref.h"
 
 #include <assert.h>
-#include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>     // Only for debug assertions at present.
@@ -165,7 +164,8 @@ static bool consume_numeric_ref(
   int codepoint = 0;
   bool status = true;
   do {
-    codepoint = (codepoint * (is_hex ? 16 : 10)) + digit;
+    // detect and prevent numeric overflow; see original PR #384 
+    if (codepoint <= 0x10ffff) codepoint = (codepoint * (is_hex ? 16 : 10)) + digit;
     utf8iterator_next(input);
     digit = parse_digit(utf8iterator_current(input), is_hex);
   } while (digit != -1);
@@ -2464,7 +2464,9 @@ valid_named_ref := |*
 *|;
 }%%
 
-%% write data;
+// clang-format off
+%% write data noerror nofinal;
+// clang-format on
 
 static bool consume_named_ref(
     struct GumboInternalParser* parser, Utf8Iterator* input, bool is_in_attribute,
@@ -2477,13 +2479,16 @@ static bool consume_named_ref(
   const char *ts, *start;
   int cs, act;
 
+  // clang-format off
   %% write init;
   // Avoid unused variable warnings.
   (void) act;
   (void) ts;
+  (void) char_ref_en_valid_named_ref;
 
   start = p;
   %% write exec;
+  // clang-format on
 
   if (cs >= %%{ write first_final; }%%) {
     assert(output->first != kGumboNoChar);
@@ -2493,7 +2498,7 @@ static bool consume_named_ref(
       bool matched = utf8iterator_maybe_consume_match(input, start, len, true);
       assert(matched);
       return true;
-    } else if (is_in_attribute && (*te == '=' || isalnum(*te))) {
+    } else if (is_in_attribute && (*te == '=' || gumbo_isalnum(*te))) {
       output->first = kGumboNoChar;
       output->second = kGumboNoChar;
       utf8iterator_reset(input);

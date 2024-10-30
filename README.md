@@ -1,7 +1,7 @@
 Gumbo - A pure-C HTML5 parser.
 ============
 
-[![Build Status](https://travis-ci.org/google/gumbo-parser.svg?branch=master)](https://travis-ci.org/google/gumbo-parser)
+[![Build Status](https://travis-ci.org/google/gumbo-parser.svg?branch=master)](https://travis-ci.org/google/gumbo-parser) [![Build status](https://ci.appveyor.com/api/projects/status/k5xxn4bxf62ao2cp?svg=true)](https://ci.appveyor.com/project/nostrademons/gumbo-parser)
 
 Gumbo is an implementation of the [HTML5 parsing algorithm][] implemented
 as a pure C99 library with no outside dependencies.  It's designed to serve
@@ -126,6 +126,18 @@ them as the super user.
 Debian installs usually don't have `sudo` installed (Ubuntu however does.)
 Switch users first with `su -`, then run `apt-get`.
 
+Building gumbo - Using vcpkg
+
+You can download and install Gumbo using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    vcpkg install gumbo
+
+The Gumbo port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
 Basic Usage
 ===========
 
@@ -135,7 +147,7 @@ Within your program, you need to include "gumbo.h" and then issue a call to
 ```C
 #include "gumbo.h"
 
-int main() {
+int main(void) {
   GumboOutput* output = gumbo_parse("<h1>Hello, World!</h1>");
   // Do stuff with output->root
   gumbo_destroy_output(&kGumboDefaultOptions, output);
@@ -175,12 +187,13 @@ an existing API (personally, I prefer BeautifulSoup) and write your program
 in terms of those.  The raw CTypes bindings should be considered building
 blocks for higher-level libraries and rarely referenced directly.
 
-External Bindings
-=================
+External Bindings and other wrappers
+====================================
 
-The following language bindings are maintained by various contributors in
-other repositories:
+The following language bindings or other tools/wrappers are maintained by
+various contributors in other repositories:
 
+* C++: [gumbo-query] by lazytiger
 * Ruby:
   * [ruby-gumbo] by Nicolas Martyanoff
   * [nokogumbo] by Sam Ruby
@@ -193,7 +206,10 @@ other repositories:
 * C#: [GumboBindings] by Vladimir Zotov
 * PHP: [GumboPHP] by Paul Preece
 * Perl: [HTML::Gumbo] by Ruslan Zakirov
+* Julia: [Gumbo.jl] by James Porter
+* C/Libxml: [gumbo-libxml] by Jonathan Tang
 
+[gumbo-query]: https://github.com/lazytiger/gumbo-query
 [ruby-gumbo]: https://github.com/nevir/ruby-gumbo
 [nokogumbo]: https://github.com/rubys/nokogumbo
 [node-gumbo-parser]: https://github.com/karlwestin/node-gumbo-parser
@@ -203,6 +219,8 @@ other repositories:
 [ObjectiveGumbo]: https://github.com/programmingthomas/ObjectiveGumbo
 [GumboBindings]: https://github.com/rgripper/GumboBindings
 [GumboPHP]: https://github.com/BipSync/gumbo
+[Gumbo.jl]: https://github.com/porterjamesj/Gumbo.jl
+[gumbo-libxml]: https://github.com/nostrademons/gumbo-libxml
 
 [HTML5 parsing algorithm]: http://www.whatwg.org/specs/web-apps/current-work/multipage/#auto-toc-12
 [HTML5 spec]: http://www.whatwg.org/specs/web-apps/current-work/multipage/

@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 #include "util.h"
 
@@ -27,9 +26,9 @@ struct GumboInternalParser;
 
 GumboAttribute* gumbo_get_attribute(
     const GumboVector* attributes, const char* name) {
-  for (int i = 0; i < attributes->length; ++i) {
+  for (unsigned int i = 0; i < attributes->length; ++i) {
     GumboAttribute* attr = attributes->data[i];
-    if (!strcasecmp(attr->name, name)) {
+    if (!gumbo_strcasecmp(attr->name, name)) {
       return attr;
     }
   }

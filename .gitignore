@@ -41,9 +41,7 @@ config.log
 config.status
 config.sub
 configure
-core
 depcomp
-gtest/
 gumbo.pc
 gumbo_test
 gumbo_test.log
@@ -65,6 +63,7 @@ gumbo_parser.target.mk
 
 # Python dist artifacts
 *.pyc
+*.dylib
 dist
 build
 python/gumbo.egg-info
@@ -78,3 +77,7 @@ get_title
 positions_of_class
 prettyprint
 serialize
+
+# Tools binaries
+print
+/tmp

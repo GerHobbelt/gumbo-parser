@@ -43,7 +43,9 @@
 #define GUMBO_GUMBO_H_
 
 #ifdef _MSC_VER
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 #define fileno _fileno
 #endif
 
@@ -75,7 +77,6 @@ typedef struct {
  * parser-inserted elements.
  */
 extern const GumboSourcePosition kGumboEmptySourcePosition;
-
 
 /**
  * A struct representing a string or part of a string.  Strings within the
@@ -111,7 +112,6 @@ bool gumbo_string_equals(
 bool gumbo_string_equals_ignore_case(
     const GumboStringPiece* str1, const GumboStringPiece* str2);
 
-
 /**
  * A simple vector implementation.  This stores a pointer to a data array and a
  * length.  All elements are stored as void*; client code must cast to the
@@ -143,7 +143,6 @@ extern const GumboVector kGumboEmptyVector;
  */
 int gumbo_vector_index_of(GumboVector* vector, const void* element);
 
-
 /**
  * An enum for all the tags defined in the HTML5 standard.  These correspond to
  * the tag names themselves.  Enum constants exist only for tags which appear in
@@ -157,8 +156,8 @@ int gumbo_vector_index_of(GumboVector* vector, const void* element);
  * strings.
  */
 typedef enum {
-  // Load all the tags from an external source, generated from tag.in.
-# include "tag_enum.h"
+// Load all the tags from an external source, generated from tag.in.
+#include "tag_enum.h"
   // Used for all tags that don't have special handling in HTML.  Add new tags
   // to the end of tag.in so as to preserve backwards-compatibility.
   GUMBO_TAG_UNKNOWN,
@@ -205,7 +204,10 @@ const char* gumbo_normalize_svg_tagname(const GumboStringPiece* tagname);
  * enum. The `tag` version expects `tagname` to be NULL-terminated
  */
 GumboTag gumbo_tag_enum(const char* tagname);
-GumboTag gumbo_tagn_enum(const char* tagname, int length);
+GumboTag gumbo_tagn_enum(const char* tagname, unsigned int length);
+
+// (only pprovided for testing purposes)
+const char** getGumboTagNamesList(void);
 
 /**
  * Attribute namespaces.
@@ -318,7 +320,9 @@ typedef enum {
  */
 typedef struct GumboInternalNode GumboNode;
 
-/** http://www.whatwg.org/specs/web-apps/current-work/complete/dom.html#quirks-mode */
+/**
+ * http://www.whatwg.org/specs/web-apps/current-work/complete/dom.html#quirks-mode
+ */
 typedef enum {
   GUMBO_DOCTYPE_NO_QUIRKS,
   GUMBO_DOCTYPE_QUIRKS,
@@ -415,7 +419,6 @@ typedef enum {
    */
   GUMBO_INSERTION_FOSTER_PARENTED = 1 << 10,
 } GumboParseFlags;
-
 
 /**
  * Information specific to document nodes.
@@ -523,19 +526,6 @@ struct GumboInternalNode {
   /** Pointer back to parent node.  Not owned. */
   GumboNode* parent;
 
-  /**
-   * Pointer to next node in document order.  This is the next node by start tag
-   * position in the document, or by position of the tag that forces the parser
-   * to insert it for parser-inserted nodes.  It's necessary to maintain API
-   * compatibility with some other libraries, eg. BeautifulSoup.  Not owned.
-   */
-  GumboNode* next;
-
-  /**
-   * Pointer to previous node in document order.
-   */
-  GumboNode* prev;
-
   /** The index within the parent's children vector of this node. */
   size_t index_within_parent;
 
@@ -548,11 +538,26 @@ struct GumboInternalNode {
 
   /** The actual node data. */
   union {
-    GumboDocument document;      // For GUMBO_NODE_DOCUMENT.
-    GumboElement element;        // For GUMBO_NODE_ELEMENT.
-    GumboText text;              // For everything else.
+    GumboDocument document;  // For GUMBO_NODE_DOCUMENT.
+    GumboElement element;    // For GUMBO_NODE_ELEMENT.
+    GumboText text;          // For everything else.
   } v;
 };
+
+
+// See https://github.com/google/gumbo-parser/issues/387
+// recursive destroy_node can cause staock overrun
+
+/**
+ * The type for a tree traversal callback.
+ */
+typedef size_t (*gumbo_tree_iter_callback)(void* userdata, GumboNode* node);
+
+/**
+ * GumboNode tree traversal with callback `cb` for each child of `node` and 
+ * for `node` itself, passing it the node and `userdata` as arguments.
+ */
+size_t gumbo_tree_traverse(GumboNode* node, void* userdata, gumbo_tree_iter_callback cb);
 
 /**
  * The type for an allocator function.  Takes the 'userdata' member of the
@@ -568,6 +573,12 @@ typedef void* (*GumboAllocatorFunction)(void* userdata, size_t size);
  * GumboParser struct as its first argument.
  */
 typedef void (*GumboDeallocatorFunction)(void* userdata, void* ptr);
+
+/**
+ * The type for a resize/reallocator function.  Takes the 'userdata' member of the
+ * GumboParser struct as its first argument.
+ */
+typedef void* (*GumboReallocatorFunction)(void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes);
 
 /**
  * Input struct containing configuration options for the parser.
@@ -589,17 +600,75 @@ typedef struct GumboInternalOptions {
   bool stop_on_first_error;
 
   /**
+   * Maximum allowed depth for the parse tree. If this limit is exceeded,
+   * the parser will return early with a partial document and the returned
+   * `GumboOutput` will have its `status` field set to
+   * `GUMBO_STATUS_TREE_TOO_DEEP`.
+   * Default: `400`.
+   */
+  unsigned int max_tree_depth;
+
+  /**
    * The maximum number of errors before the parser stops recording them.  This
    * is provided so that if the page is totally borked, we don't completely fill
    * up the errors vector and exhaust memory with useless redundant errors.  Set
    * to -1 to disable the limit.
-   * Default: -1
+   * Default: 50
    */
   int max_errors;
+
+  /**
+   * The fragment context for parsing:
+   * https://html.spec.whatwg.org/multipage/syntax.html#parsing-html-fragments
+   *
+   * If GUMBO_TAG_LAST is passed here, it is assumed to be "no fragment", i.e.
+   * the regular parsing algorithm.  Otherwise, pass the tag enum for the
+   * intended parent of the parsed fragment.  We use just the tag enum rather
+   * than a full node because that's enough to set all the parsing context we
+   * need, and it provides some additional flexibility for client code to act as
+   * if parsing a fragment even when a full HTML tree isn't available.
+   *
+   * Default: GUMBO_TAG_LAST
+   */
+  GumboTag fragment_context;
+
+  /**
+   * The namespace for the fragment context.  This lets client code
+   * differentiate between, say, parsing a <title> tag in SVG vs. parsing it in
+   * HTML.
+   * Default: GUMBO_NAMESPACE_HTML
+   */
+  GumboNamespaceEnum fragment_namespace;
 } GumboOptions;
 
 /** Default options struct; use this with gumbo_parse_with_options. */
 extern const GumboOptions kGumboDefaultOptions;
+
+/**
+ * Status code indicating whether parsing finished successfully or
+ * was stopped mid-document due to exceptional circumstances.
+ */
+typedef enum {
+  /**
+   * Indicates that parsing completed successfuly. The resulting tree
+   * will be a complete document.
+   */
+  GUMBO_STATUS_OK,
+
+  /**
+   * Indicates that the maximum element nesting limit
+   * (`GumboOptions::max_tree_depth`) was reached during parsing. The
+   * resulting tree will be a partial document, with no further nodes
+   * created after the point at which the limit was reached. The partial
+   * document may be useful for constructing an error message but
+   * typically shouldn't be used for other purposes.
+   */
+  GUMBO_STATUS_TREE_TOO_DEEP,
+
+  // Currently unused
+  GUMBO_STATUS_OUT_OF_MEMORY,
+} GumboOutputStatus;
+
 
 /** Base struct for an arena. */
 struct GumboInternalArenaChunk;
@@ -627,12 +696,24 @@ typedef struct GumboInternalOutput {
 
   /**
    * A list of errors that occurred during the parse.
+   * 
    * NOTE: In version 1.0 of this library, the API for errors hasn't been fully
    * fleshed out and may change in the future.  For this reason, the GumboError
    * header isn't part of the public API.  Contact us if you need errors
    * reported so we can work out something appropriate for your use-case.
    */
   GumboVector /* GumboError */ errors;
+
+  /**
+   * A status code indicating whether parsing finished successfully or was
+   * stopped mid-document due to exceptional circumstances.
+   */
+  GumboOutputStatus status;
+
+  /**
+   * A list of error messages that occurred during the parse.
+   */
+  const char **error_messages;
 
   /**
    * Arena for default memory allocation.  This is initialized on parse start
@@ -671,17 +752,27 @@ GumboOutput* gumbo_parse(const char* buffer);
 GumboOutput* gumbo_parse_with_options(
     const GumboOptions* options, const char* buffer, size_t buffer_length);
 
-/**
- * Parse a chunk of HTML with the given fragment context. If `fragment_ctx`
- * is `GUMBO_TAG_LAST`, the fragment will be parsed as a full document.
- */
-GumboOutput* gumbo_parse_fragment(
-    const GumboOptions* options, const char* buffer, size_t length,
-    const GumboTag fragment_ctx, const GumboNamespaceEnum fragment_namespace);
+/** Convert a `GumboOutputStatus` code into a readable description. */
+const char* gumbo_status_to_string(GumboOutputStatus status);
 
 /** Release the memory used for the parse tree & parse errors. */
-void gumbo_destroy_output(
-    const GumboOptions* options, GumboOutput* output);
+void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+#if defined(BUILD_MONOLITHIC)
+int gumbo_benchmark_main(int argc, const char** argv);
+int gumbo_eval_xpath_main(int argc, const char** argv);
+int gumbo_clean_text_main(int argc, const char** argv);
+int gumbo_find_links_main(int argc, const char** argv);
+int gumbo_get_title_main(int argc, const char** argv);
+int gumbo_positions_of_class_main(int argc, const char** argv);
+int gumbo_prettyprint_main(int argc, const char** argv);
+int gumbo_serialize_main(int argc, const char** argv);
+int gumbo_print_main(int argc, const char** argv);
+#endif
 
 
 #ifdef __cplusplus
