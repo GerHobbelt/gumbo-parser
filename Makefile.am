@@ -37,6 +37,22 @@ clean-local:
 
 endif !HAVE_SHARED_LIBGTEST
 
+if PYTHON_FOUND
+if GPERF_FOUND
+@srcdir@/src/tag_gperf.h: src/tag.in gentags.py genperf.py
+	@echo GENPERF $<
+	@python gentags.py $<
+	@echo GPERF $<
+	@gperf -LANSI-C --ignore-case -m200 $< |python genperf.py >@srcdir@/src/tag_gperf.h
+endif
+endif
+
+if RAGEL_FOUND
+@srcdir@/src/char_ref.c: src/char_ref.rl
+	@echo RAGEL src/char_ref.rl
+	@cd @srcdir@/src && ragel -F0 char_ref.rl > char_ref.c
+endif
+
 lib_LTLIBRARIES = libgumbo.la
 libgumbo_la_CFLAGS = -Wall
 libgumbo_la_LDFLAGS = -version-info 1:0:0 -no-undefined
@@ -55,6 +71,10 @@ libgumbo_la_SOURCES = \
 				src/string_piece.c \
 				src/string_piece.h \
 				src/tag.c \
+				src/tag_enum.h \
+				src/tag_gperf.h \
+				src/tag_strings.h \
+				src/tag_sizes.h \
 				src/token_type.h \
 				src/tokenizer.c \
 				src/tokenizer.h \
@@ -64,8 +84,10 @@ libgumbo_la_SOURCES = \
 				src/util.c \
 				src/util.h \
 				src/vector.c \
-				src/vector.h
-include_HEADERS = src/gumbo.h
+				src/vector.h \
+                src/xpath.h \
+                src/xpath.c
+include_HEADERS = src/gumbo.h src/tag_enum.h src/vector.h src/xpath.h src/parser.h src/string_buffer.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gumbo.pc
@@ -83,9 +105,11 @@ gumbo_test_SOURCES = \
 				tests/string_buffer.cc \
 				tests/string_piece.cc \
 				tests/tokenizer.cc \
+				tests/tag.cc \
 				tests/test_utils.cc \
 				tests/utf8.cc \
-				tests/vector.cc
+				tests/vector.cc \
+				tests/error.cc
 gumbo_test_DEPENDENCIES = libgumbo.la
 gumbo_test_LDADD = libgumbo.la
 
@@ -97,12 +121,19 @@ gumbo_test_DEPENDENCIES += check-local
 gumbo_test_LDADD += gtest/lib/libgtest.la gtest/lib/libgtest_main.la
 endif
 
-noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark
+if HAVE_EXAMPLES
+noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint print evalxpath
+endif
 LDADD = libgumbo.la
 AM_CPPFLAGS = -I"$(srcdir)/src"
+AM_CXXFLAGS = -std=c++11 -I"$(srcdir)/src"
 
 clean_text_SOURCES = examples/clean_text.cc
 find_links_SOURCES = examples/find_links.cc
 get_title_SOURCES = examples/get_title.c
 positions_of_class_SOURCES = examples/positions_of_class.cc
 benchmark_SOURCES = benchmarks/benchmark.cc
+serialize_SOURCES = examples/serialize.cc
+prettyprint_SOURCES = examples/prettyprint.cc
+print_SOURCES = tools/print.cc
+evalxpath_SOURCES = examples/eval_xpath.cc

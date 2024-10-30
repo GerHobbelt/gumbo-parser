@@ -4,13 +4,18 @@ compiler:
   - gcc
   - clang
 
+os:
+  - linux
+  - osx
+
+# see: https://github.com/google/gumbo-parser/pull/390
+# see: https://github.com/google/gumbo-parser/pull/368
 install:
-  - wget 'https://googletest.googlecode.com/files/gtest-1.6.0.zip'
-  - unzip gtest-1.6.0.zip
-  - ln -s gtest-1.6.0 gtest
-  - sudo pip install BeautifulSoup
+  - wget 'https://github.com/google/googletest/archive/release-1.8.0.zip'
+  - unzip release-1.8.0.zip
+  - ln -s googletest-release-1.8.0 gtest
+  - sudo pip install bs4
   - sudo pip install html5lib==0.95
-  - ln -s `python -c 'import html5lib, os; print os.path.dirname(html5lib.__file__)'`/tests/testdata .
 
 script:
   - ./autogen.sh && ./configure && make && make check
@@ -18,5 +23,6 @@ script:
   - python python/gumbo/html5lib_adapter_test.py
   - python python/gumbo/soup_adapter_test.py
   - sudo make install
+  - g++ examples/clean_text.cc `pkg-config --cflags --libs gumbo`
   - sudo python setup.py sdist install
   - python -c 'import gumbo; gumbo.parse("Foo")'

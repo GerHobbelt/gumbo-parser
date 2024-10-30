@@ -8,6 +8,16 @@
 *.swo
 *.swn
 
+#emacs editor leftovers
+*.*~
+
+#diff leftovers
+*.orig
+
+# gtest pieces
+gtest
+gtest-1.7.0
+
 # Other build artifacts
 /Debug
 /visualc/Debug
@@ -53,6 +63,7 @@ gumbo_parser.target.mk
 
 # Python dist artifacts
 *.pyc
+*.dylib
 dist
 build
 python/gumbo.egg-info
@@ -64,3 +75,9 @@ clean_text
 find_links
 get_title
 positions_of_class
+prettyprint
+serialize
+
+# Tools binaries
+print
+/tmp

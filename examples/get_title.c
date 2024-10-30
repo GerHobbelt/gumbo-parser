@@ -61,24 +61,29 @@ static const char* find_title(const GumboNode* root) {
         return "<empty title>";
       }
       GumboNode* title_text = child->v.element.children.data[0];
-      assert(title_text->type == GUMBO_NODE_TEXT);
+      assert(title_text->type == GUMBO_NODE_TEXT || title_text->type == GUMBO_NODE_WHITESPACE);
       return title_text->v.text.text;
     }
   }
   return "<no title found>";
 }
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_get_title_main
+#endif
+
 int main(int argc, const char** argv) {
   if (argc != 2) {
     printf("Usage: get_title <html filename>.\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   const char* filename = argv[1];
 
   FILE* fp = fopen(filename, "r");
   if (!fp) {
     printf("File %s not found!\n", filename);
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   char* input;
@@ -90,4 +95,6 @@ int main(int argc, const char** argv) {
   printf("%s\n", title);
   gumbo_destroy_output(&kGumboDefaultOptions, output);
   free(input);
+
+  return EXIT_SUCCESS;
 }
