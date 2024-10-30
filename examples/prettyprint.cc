@@ -307,17 +307,22 @@ static std::string prettyprint(
   return results;
 }
 
-int main(int argc, char** argv) {
+
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_prettyprint_main
+#endif
+
+int main(int argc, const char** argv) {
   if (argc != 2) {
     std::cout << "prettyprint <html filename>\n";
-    exit(EXIT_FAILURE);
+      return EXIT_FAILURE;
   }
   const char* filename = argv[1];
 
   std::ifstream in(filename, std::ios::in | std::ios::binary);
   if (!in) {
     std::cout << "File " << filename << " not found!\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   std::string contents;
@@ -334,4 +339,6 @@ int main(int argc, char** argv) {
   std::string indent_chars = "  ";
   std::cout << prettyprint(output->document, 0, indent_chars) << std::endl;
   gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+  return EXIT_SUCCESS;
 }

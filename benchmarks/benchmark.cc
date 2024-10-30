@@ -27,10 +27,15 @@
 
 static const int kNumReps = 10;
 
-int main(int argc, char** argv) {
+
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_benchmark_main
+#endif
+
+int main(int argc, const char** argv) {
   if (argc != 1) {
     std::cout << "Usage: benchmarks\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   DIR* dir;
@@ -39,7 +44,7 @@ int main(int argc, char** argv) {
   if ((dir = opendir("benchmarks")) == NULL) {
     std::cout << "Couldn't find 'benchmarks' directory.  "
               << "Run from root of distribution.\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   while ((file = readdir(dir)) != NULL) {
@@ -50,7 +55,7 @@ int main(int argc, char** argv) {
       std::ifstream in(full_filename.c_str(), std::ios::in | std::ios::binary);
       if (!in) {
         std::cout << "File " << full_filename << " couldn't be read!\n";
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
       }
 
       std::string contents;
@@ -73,4 +78,6 @@ int main(int argc, char** argv) {
     }
   }
   closedir(dir);
+
+  return EXIT_SUCCESS;
 }

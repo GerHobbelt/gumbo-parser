@@ -138,7 +138,8 @@ static bool consume_numeric_ref(
   int codepoint = 0;
   bool status = true;
   do {
-    codepoint = (codepoint * (is_hex ? 16 : 10)) + digit;
+    // detect and prevent numeric overflow see original PR #384
+    if (codepoint <= 0x10ffff) codepoint = (codepoint * (is_hex ? 16 : 10)) + digit;
     utf8iterator_next(input);
     digit = parse_digit(utf8iterator_current(input), is_hex);
   } while (digit != -1);
@@ -15727,27 +15728,6 @@ static const int char_ref_en_valid_named_ref = 7623;
 
 // clang-format on
 
-static bool gumbo_isalnum(unsigned char ch) {
-#ifdef __GNUC__
-  switch (ch) {
-    case 'a' ... 'z':
-    case 'A' ... 'Z':
-    case '0' ... '9':
-      return true;
-    default:
-      return false;
-  }
-#else
-  if ('a' <= ch && ch <= 'z')
-    return true;
-  else if ('A' <= ch && ch <= 'Z')
-    return true;
-  else if ('0' <= ch && ch <= '9')
-    return true;
-  else
-    return false;
-#endif
-}
 static bool consume_named_ref(struct GumboInternalParser* parser,
     Utf8Iterator* input, bool is_in_attribute, OneOrTwoCodepoints* output) {
   assert(output->first == kGumboNoChar);
