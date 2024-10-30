@@ -210,7 +210,7 @@ static std::string prettyprint_contents(GumboNode* node, int lvl, const std::str
       contents.append(val);
 
 
-    } else if (child->type == GUMBO_NODE_ELEMENT) {
+    } else if ((child->type == GUMBO_NODE_ELEMENT) || (child->type == GUMBO_NODE_TEMPLATE)) {
 
       std::string val = prettyprint(child, lvl, indent_chars);
 
@@ -326,17 +326,21 @@ static std::string prettyprint(GumboNode* node, int lvl, const std::string inden
 }
 
 
-int main(int argc, char** argv) {
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_prettyprint_main
+#endif
+
+int main(int argc, const char** argv) {
   if (argc != 2) {
       std::cout << "prettyprint <html filename>\n";
-      exit(EXIT_FAILURE);
+      return EXIT_FAILURE;
   }
   const char* filename = argv[1];
 
   std::ifstream in(filename, std::ios::in | std::ios::binary);
   if (!in) {
     std::cout << "File " << filename << " not found!\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   std::string contents;
@@ -352,4 +356,6 @@ int main(int argc, char** argv) {
   std::string indent_chars = "  ";
   std::cout << prettyprint(output->document, 0, indent_chars) << std::endl;
   gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+  return EXIT_SUCCESS;
 }
