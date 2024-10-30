@@ -21,6 +21,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string>
+#include <cstring>
 
 #include "gumbo.h"
 
@@ -30,18 +31,6 @@ static std::string preserve_whitespace = "|pre|textarea|script|style|";
 static std::string special_handling    = "|html|body|";
 static std::string no_entity_sub       = "|script|style|";
 static std::string treat_like_inline   = "|p|";
-
-static inline void rtrim(std::string &s) 
-{
-  s.erase(s.find_last_not_of(" \n\r\t")+1);
-}
-
-
-static inline void ltrim(std::string &s)
-{
-  s.erase(0,s.find_first_not_of(" \n\r\t"));
-}
-
 
 static void replace_all(std::string &s, const char * s1, const char * s2)
 {
@@ -124,7 +113,7 @@ static std::string build_doctype(GumboNode *node)
         results.append(node->v.document.system_identifier);
         results.append("\"");
     }
-    results.append(">\n");
+    results.append(">");
   }
   return results;
 }
@@ -167,13 +156,13 @@ static std::string build_attributes(GumboAttribute * at, bool no_entities)
 
 // forward declaration
 
-static std::string prettyprint(GumboNode*, int lvl, const std::string indent_chars);
+static std::string print(GumboNode*);
 
 
-// prettyprint children of a node
+// print children of a node
 // may be invoked recursively
 
-static std::string prettyprint_contents(GumboNode* node, int lvl, const std::string indent_chars) {
+static std::string print_contents(GumboNode* node) {
 
   std::string contents        = "";
   std::string tagname         = get_tag_name(node);
@@ -192,42 +181,20 @@ static std::string prettyprint_contents(GumboNode* node, int lvl, const std::str
 
       std::string val;
 
-      if (no_entity_substitution) {
-        val = std::string(child->v.text.text);
-      } else {
-        val = substitute_xml_entities_into_text(std::string(child->v.text.text));
-      }
-
-      if (pp_okay) rtrim(val);
-
-      if (pp_okay && (contents.length() == 0)) {
-        // add required indentation
-        char c = indent_chars.at(0);
-        int n  = indent_chars.length();
-        contents.append(std::string((lvl-1)*n,c));
-      }
+      val = std::string(child->v.text.text);
 
       contents.append(val);
 
 
     } else if ((child->type == GUMBO_NODE_ELEMENT) || (child->type == GUMBO_NODE_TEMPLATE)) {
 
-      std::string val = prettyprint(child, lvl, indent_chars);
-
-      // remove any indentation if this child is inline and not first child
-      std::string childname = get_tag_name(child);
-      std::string childkey = "|" + childname + "|";
-      if ((nonbreaking_inline.find(childkey) != std::string::npos) && (contents.length() > 0)) {
-        ltrim(val);
-      }
+      std::string val = print(child);
 
       contents.append(val);
 
     } else if (child->type == GUMBO_NODE_WHITESPACE) {
 
-      if (keep_whitespace || is_inline) {
-        contents.append(std::string(child->v.text.text));
-      }
+      contents.append(std::string(child->v.text.text));
 
     } else if (child->type != GUMBO_NODE_COMMENT) {
 
@@ -242,15 +209,15 @@ static std::string prettyprint_contents(GumboNode* node, int lvl, const std::str
 }
 
 
-// prettyprint a GumboNode back to html/xhtml
+// print a GumboNode back to html/xhtml
 // may be invoked recursively
 
-static std::string prettyprint(GumboNode* node, int lvl, const std::string indent_chars) {
+static std::string print(GumboNode* node) {
 
   // special case the document node
   if (node->type == GUMBO_NODE_DOCUMENT) {
     std::string results = build_doctype(node);
-    results.append(prettyprint_contents(node,lvl+1,indent_chars));
+    results.append(print_contents(node));
     return results;
   }
 
@@ -266,8 +233,6 @@ static std::string prettyprint(GumboNode* node, int lvl, const std::string inden
   bool is_inline                 = nonbreaking_inline.find(key) != std::string::npos;
   bool inline_like               = treat_like_inline.find(key) != std::string::npos;
   bool pp_okay                   = !is_inline && !keep_whitespace;
-  char c                         = indent_chars.at(0);
-  int  n                         = indent_chars.length(); 
 
   // build attr string
   const GumboVector * attribs = &node->v.element.attributes;
@@ -283,79 +248,36 @@ static std::string prettyprint(GumboNode* node, int lvl, const std::string inden
       closeTag = "</" + tagname + ">";
   }
 
-  std::string indent_space = std::string((lvl-1)*n,c);
-
-  // prettyprint your contents 
-  std::string contents = prettyprint_contents(node, lvl+1, indent_chars);
-
-  if (need_special_handling) {
-    rtrim(contents);
-    contents.append("\n");
-  }
-
-  char last_char = ' ';
-  if (!contents.empty()) {
-    last_char = contents.at(contents.length()-1);
-  } 
+  // print your contents 
+  std::string contents = print_contents(node);
 
   // build results
   std::string results;
-  if (pp_okay) {
-    results.append(indent_space);
-  }
   results.append("<"+tagname+atts+close+">");
-  if (pp_okay && !inline_like) {
-    results.append("\n");
-  }
-  if (inline_like) {
-    ltrim(contents);
-  }
   results.append(contents);
-  if (pp_okay && !contents.empty() && (last_char != '\n') && (!inline_like)) {
-    results.append("\n");
-  }
-  if (pp_okay && !inline_like && !closeTag.empty()) {
-    results.append(indent_space);
-  }
   results.append(closeTag);
-  if (pp_okay && !closeTag.empty()) {
-    results.append("\n");
-  }
 
   return results;
 }
 
 
 #if defined(BUILD_MONOLITHIC)
-#define main		gumbo_prettyprint_main
+#define main		gumbo_print_main
 #endif
 
 int main(int argc, const char** argv) {
-  if (argc != 2) {
-      std::cout << "prettyprint <html filename>\n";
-      return EXIT_FAILURE;
-  }
-  const char* filename = argv[1];
-
-  std::ifstream in(filename, std::ios::in | std::ios::binary);
-  if (!in) {
-    std::cout << "File " << filename << " not found!\n";
-    return EXIT_FAILURE;
-  }
-
+  char buffer[4096];
   std::string contents;
-  in.seekg(0, std::ios::end);
-  contents.resize(in.tellg());
-  in.seekg(0, std::ios::beg);
-  in.read(&contents[0], contents.size());
-  in.close();
+  while (!feof(stdin)) {
+      fgets(buffer, 4096, stdin);
+      contents.append(buffer);
+      memset(buffer, 0, sizeof buffer);
+  }
  
   GumboOptions options = kGumboDefaultOptions;
 
   GumboOutput* output = gumbo_parse_with_options(&options, contents.data(), contents.length());
-  std::string indent_chars = "  ";
-  std::cout << prettyprint(output->document, 0, indent_chars) << std::endl;
+  std::cout << print(output->document);
   gumbo_destroy_output(&kGumboDefaultOptions, output);
-
-  return EXIT_SUCCESS;
+  return 0;
 }

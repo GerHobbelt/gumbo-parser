@@ -43,7 +43,9 @@
 #define GUMBO_GUMBO_H_
 
 #ifdef _MSC_VER
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 #define fileno _fileno
 #endif
 
@@ -203,6 +205,9 @@ const char* gumbo_normalize_svg_tagname(const GumboStringPiece* tagname);
  */
 GumboTag gumbo_tag_enum(const char* tagname);
 GumboTag gumbo_tagn_enum(const char* tagname, unsigned int length);
+
+// (only pprovided for testing purposes)
+const char** getGumboTagNamesList(void);
 
 /**
  * Attribute namespaces.
@@ -539,6 +544,21 @@ struct GumboInternalNode {
   } v;
 };
 
+
+// See https://github.com/google/gumbo-parser/issues/387
+// recursive destroy_node can cause staock overrun
+
+/**
+ * The type for a tree traversal callback.
+ */
+typedef size_t (*gumbo_tree_iter_callback)(void* userdata, GumboNode* node);
+
+/**
+ * GumboNode tree traversal with callback `cb` for each child of `node` and 
+ * for `node` itself, passing it the node and `userdata` as arguments.
+ */
+size_t gumbo_tree_traverse(GumboNode* node, void* userdata, gumbo_tree_iter_callback cb);
+
 /**
  * The type for an allocator function.  Takes the 'userdata' member of the
  * GumboParser struct as its first argument.  Semantics should be the same as
@@ -555,6 +575,12 @@ typedef void* (*GumboAllocatorFunction)(void* userdata, size_t size);
 typedef void (*GumboDeallocatorFunction)(void* userdata, void* ptr);
 
 /**
+ * The type for a resize/reallocator function.  Takes the 'userdata' member of the
+ * GumboParser struct as its first argument.
+ */
+typedef void* (*GumboReallocatorFunction)(void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes);
+
+/**
  * Input struct containing configuration options for the parser.
  * These let you specify alternate memory managers, provide different error
  * handling, etc.
@@ -566,6 +592,9 @@ typedef struct GumboInternalOptions {
 
   /** A memory deallocator function. Default: free. */
   GumboDeallocatorFunction deallocator;
+
+  /** A memory resize/reallocator function. Default: realloc. */
+  GumboReallocatorFunction reallocator;
 
   /**
    * An opaque object that's passed in as the first argument to all callbacks
@@ -586,11 +615,20 @@ typedef struct GumboInternalOptions {
   bool stop_on_first_error;
 
   /**
+   * Maximum allowed depth for the parse tree. If this limit is exceeded,
+   * the parser will return early with a partial document and the returned
+   * `GumboOutput` will have its `status` field set to
+   * `GUMBO_STATUS_TREE_TOO_DEEP`.
+   * Default: `400`.
+   */
+  unsigned int max_tree_depth;
+
+  /**
    * The maximum number of errors before the parser stops recording them.  This
    * is provided so that if the page is totally borked, we don't completely fill
    * up the errors vector and exhaust memory with useless redundant errors.  Set
    * to -1 to disable the limit.
-   * Default: -1
+   * Default: 50
    */
   int max_errors;
 
@@ -616,10 +654,43 @@ typedef struct GumboInternalOptions {
    * Default: GUMBO_NAMESPACE_HTML
    */
   GumboNamespaceEnum fragment_namespace;
+
+  /**
+   * Flag, set to true if you want to signal in the output when the parsing failed to complete before
+   * timing out.
+   * Default: true
+   */
+  bool signal_timeout;
 } GumboOptions;
 
 /** Default options struct; use this with gumbo_parse_with_options. */
 extern const GumboOptions kGumboDefaultOptions;
+
+/**
+ * Status code indicating whether parsing finished successfully or
+ * was stopped mid-document due to exceptional circumstances.
+ */
+typedef enum {
+  /**
+   * Indicates that parsing completed successfuly. The resulting tree
+   * will be a complete document.
+   */
+  GUMBO_STATUS_OK,
+
+  /**
+   * Indicates that the maximum element nesting limit
+   * (`GumboOptions::max_tree_depth`) was reached during parsing. The
+   * resulting tree will be a partial document, with no further nodes
+   * created after the point at which the limit was reached. The partial
+   * document may be useful for constructing an error message but
+   * typically shouldn't be used for other purposes.
+   */
+  GUMBO_STATUS_TREE_TOO_DEEP,
+
+  // Currently unused
+  GUMBO_STATUS_OUT_OF_MEMORY,
+} GumboOutputStatus;
+
 
 /** The output struct containing the results of the parse. */
 typedef struct GumboInternalOutput {
@@ -637,12 +708,24 @@ typedef struct GumboInternalOutput {
 
   /**
    * A list of errors that occurred during the parse.
+   * 
    * NOTE: In version 1.0 of this library, the API for errors hasn't been fully
    * fleshed out and may change in the future.  For this reason, the GumboError
    * header isn't part of the public API.  Contact us if you need errors
    * reported so we can work out something appropriate for your use-case.
    */
   GumboVector /* GumboError */ errors;
+
+  /**
+   * A status code indicating whether parsing finished successfully or was
+   * stopped mid-document due to exceptional circumstances.
+   */
+  GumboOutputStatus status;
+
+  /**
+   * A list of error messages that occurred during the parse.
+   */
+  const char **error_messages;
 
   /**
    * Flag, set to true if the parsing failed to complete before
@@ -664,12 +747,30 @@ GumboOutput* gumbo_parse(const char* buffer);
  * Extended version of gumbo_parse that takes an explicit options structure,
  * buffer, and length.
  */
-GumboOutput* gumbo_parse_with_options(
-    const GumboOptions* options, bool *timeout,
-    const char* buffer, size_t buffer_length);
+GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* buffer, size_t buffer_length);
+
+/** Convert a `GumboOutputStatus` code into a readable description. */
+const char* gumbo_status_to_string(GumboOutputStatus status);
 
 /** Release the memory used for the parse tree & parse errors. */
 void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+#if defined(BUILD_MONOLITHIC)
+int gumbo_benchmark_main(int argc, const char** argv);
+int gumbo_eval_xpath_main(int argc, const char** argv);
+int gumbo_clean_text_main(int argc, const char** argv);
+int gumbo_find_links_main(int argc, const char** argv);
+int gumbo_get_title_main(int argc, const char** argv);
+int gumbo_positions_of_class_main(int argc, const char** argv);
+int gumbo_prettyprint_main(int argc, const char** argv);
+int gumbo_serialize_main(int argc, const char** argv);
+int gumbo_print_main(int argc, const char** argv);
+#endif
+
 
 #ifdef __cplusplus
 }

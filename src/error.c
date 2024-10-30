@@ -59,9 +59,8 @@ static int print_message(
   }
 #endif
 
-  if (bytes_written > remaining_capacity) {
-    gumbo_string_buffer_reserve(
-        parser, output->capacity + bytes_written, output);
+  if (bytes_written >= remaining_capacity) {
+    gumbo_string_buffer_reserve(parser, output->capacity + bytes_written, output);
     remaining_capacity = output->capacity - output->length;
     va_start(args, format);
     bytes_written = vsnprintf(
@@ -79,7 +78,7 @@ static void print_tag_stack(GumboParser* parser, const GumboParserError* error,
     if (i) {
       print_message(parser, output, ", ");
     }
-    GumboTag tag = (GumboTag) error->tag_stack.data[i];
+    GumboTag tag = (GumboTag)((intptr_t) error->tag_stack.data[i]);
     print_message(parser, output, gumbo_normalized_tagname(tag));
   }
   gumbo_string_buffer_append_codepoint(parser, '.', output);
@@ -136,11 +135,14 @@ static const char* find_last_newline(
     const char* original_text, const char* error_location) {
   assert(error_location >= original_text);
   const char* c = error_location;
+  // if the error location itself is a newline then start searching for 
+  // the preceding newline one character earlier see original PR #371
+  if (*error_location == '\n' && c != original_text) --c;
   for (; c != original_text && *c != '\n'; --c) {
     // There may be an error at EOF, which would be a nul byte.
     assert(*c || c == error_location);
   }
-  return c == original_text ? c : c + 1;
+  return c == original_text || c == error_location ? c : c + 1;
 }
 
 // Finds the next newline in the original source buffer from a given byte
@@ -178,6 +180,11 @@ void gumbo_error_to_string(
           "Input stream ends with a truncated UTF8 character 0x%x",
           error->v.codepoint);
       break;
+    case GUMBO_ERR_UTF8_NULL:
+      print_message (parser, output, 
+        "Unexpected NULL character in the input stream"
+      );
+      break;
     case GUMBO_ERR_NUMERIC_CHAR_REF_NO_DIGITS:
       print_message(
           parser, output, "No digits after &# in numeric character reference");
@@ -213,11 +220,20 @@ void gumbo_error_to_string(
           error->v.duplicate_attr.name, error->v.duplicate_attr.original_index,
           error->v.duplicate_attr.new_index);
       break;
+    case GUMBO_ERR_DASHES_OR_DOCTYPE:
+      print_message(parser, output, 
+        "Incorrectly opened comment; expected '--', 'DOCTYPE', or '[CDATA['"
+      );
+      break;
     case GUMBO_ERR_PARSER:
     case GUMBO_ERR_UNACKNOWLEDGED_SELF_CLOSING_TAG:
       handle_parser_error(parser, &error->v.parser, output);
       break;
-    default:
+	case GUMBO_ERR_TAG_STARTS_WITH_QUESTION:
+      print_message(parser, output,
+          "Tag starts with a '?' question mark: are you perchance parsing XML instead of HTML?");
+	  break;
+	default:
       print_message(parser, output,
           "Tokenizer error with an unimplemented error message");
       break;
@@ -239,11 +255,12 @@ void gumbo_caret_diagnostic_to_string(GumboParser* parser,
   gumbo_string_buffer_append_codepoint(parser, '\n', output);
   gumbo_string_buffer_append_string(parser, &original_line, output);
   gumbo_string_buffer_append_codepoint(parser, '\n', output);
-  gumbo_string_buffer_reserve(
-      parser, output->length + error->position.column, output);
-  int num_spaces = error->position.column - 1;
-  memset(output->data + output->length, ' ', num_spaces);
-  output->length += num_spaces;
+  gumbo_string_buffer_reserve(parser, output->length + error->position.column, output);
+  if (error->position.column >= 2) {
+    int num_spaces = error->position.column - 1;
+    memset(output->data + output->length, ' ', num_spaces);
+    output->length += num_spaces;
+  }
   gumbo_string_buffer_append_codepoint(parser, '^', output);
   gumbo_string_buffer_append_codepoint(parser, '\n', output);
 }
@@ -269,6 +286,7 @@ void gumbo_error_destroy(GumboParser* parser, GumboError* error) {
 
 void gumbo_init_errors(GumboParser* parser) {
   gumbo_vector_init(parser, 5, &parser->_output->errors);
+  parser->_output->error_messages = NULL;
 }
 
 void gumbo_destroy_errors(GumboParser* parser) {
