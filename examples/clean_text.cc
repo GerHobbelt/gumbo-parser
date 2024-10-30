@@ -44,17 +44,22 @@ static std::string cleantext(GumboNode* node) {
   }
 }
 
-int main(int argc, char** argv) {
+
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_clean_text_main
+#endif
+
+int main(int argc, const char** argv) {
   if (argc != 2) {
     std::cout << "Usage: clean_text <html filename>\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   const char* filename = argv[1];
 
   std::ifstream in(filename, std::ios::in | std::ios::binary);
   if (!in) {
     std::cout << "File " << filename << " not found!\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   std::string contents;
@@ -67,4 +72,6 @@ int main(int argc, char** argv) {
   GumboOutput* output = gumbo_parse(contents.c_str());
   std::cout << cleantext(output->root) << std::endl;
   gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+  return EXIT_SUCCESS;
 }
