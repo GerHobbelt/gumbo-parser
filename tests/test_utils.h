@@ -22,6 +22,7 @@
 #include <string>
 
 #include "gtest/gtest.h"
+
 #include "gumbo.h"
 #include "parser.h"
 

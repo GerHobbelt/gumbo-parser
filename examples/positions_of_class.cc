@@ -61,10 +61,15 @@ static void search_for_class(
   }
 }
 
-int main(int argc, char** argv) {
+
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_positions_of_class_main
+#endif
+
+int main(int argc, const char** argv) {
   if (argc != 3) {
     std::cout << "Usage: positions_of_class <html filename> <CSS classname>.\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   const char* filename = argv[1];
   const char* cls = argv[2];
@@ -72,7 +77,7 @@ int main(int argc, char** argv) {
   std::ifstream in(filename, std::ios::in | std::ios::binary);
   if (!in) {
     std::cout << "File " << filename << " not found!\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   std::string contents;
@@ -89,4 +94,6 @@ int main(int argc, char** argv) {
       &kGumboDefaultOptions, contents.data(), contents.length());
   search_for_class(output->root, contents, cls);
   gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+  return EXIT_SUCCESS;
 }

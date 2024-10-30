@@ -9,8 +9,15 @@ AC_CONFIG_SRCDIR([src/parser.c])
 AC_CONFIG_FILES([Makefile gumbo.pc])
 
 # Checks for programs.
-AC_PROG_CXX
 AC_PROG_CC_C99
+AC_PROG_CXX
+AC_DEFUN([GUMBO_CHECK_PROG],[dnl
+AC_ARG_VAR([$1],[$3])
+AC_CHECK_PROG([$1],[[$2]],[yes],[no])
+AM_CONDITIONAL([$1_FOUND],[[[ "x${$1}" = 'xyes' ]]])])
+GUMBO_CHECK_PROG([PYTHON],[python],[Path to python interpreter])
+GUMBO_CHECK_PROG([RAGEL],[ragel],[Path to ragel state-machine compiler])
+GUMBO_CHECK_PROG([GPERF],[gperf],[Path to gperf perfect-hash function generator])
 
 # Checks for libraries.
 
@@ -26,6 +33,10 @@ AC_CHECK_LIB([gtest_main],
              [main],
              AM_CONDITIONAL(HAVE_SHARED_LIBGTEST, [true]),
              AM_CONDITIONAL(HAVE_SHARED_LIBGTEST, [false]))
+
+AC_ARG_ENABLE([examples],
+              AS_HELP_STRING([--disable-examples], [Disable examples]))
+AM_CONDITIONAL([HAVE_EXAMPLES], [test "x$enable_examples" != "xno"])
 
 # Init Automake & libtool
 AM_INIT_AUTOMAKE([foreign subdir-objects])
