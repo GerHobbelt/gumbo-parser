@@ -15,6 +15,7 @@
 // Author: jdtang@google.com (Jonathan Tang)
 
 #include "gumbo.h"
+#include "string_buffer.h"
 
 #include <string>
 
@@ -26,11 +27,14 @@ namespace {
 class GumboParserTest : public ::testing::Test {
  protected:
   GumboParserTest()
-      : options_(kGumboDefaultOptions), output_(NULL), root_(NULL) {
+      : options_(kGumboDefaultOptions), output_(NULL), root_(NULL), input_rpt_({0}) {
     InitLeakDetection(&options_, &malloc_stats_);
   }
 
   virtual ~GumboParserTest() {
+    if (input_rpt_.data != nullptr) {
+      options_.deallocator(options_.userdata, input_rpt_.data);
+    }
     if (output_) {
       gumbo_destroy_output(&options_, output_);
     }
@@ -73,11 +77,144 @@ class GumboParserTest : public ::testing::Test {
     SanityCheckPointers(input.data(), input.length(), output_->root, 1000);
   }
 
+  const char* string_repeat(const char* s, size_t count) {
+    size_t slen = strlen(s);
+    //gumbo_string_buffer_init(parser, &text);
+    size_t new_size = (count * slen) + 1;
+    if (input_rpt_.data != nullptr) {
+      options_.deallocator(options_.userdata, input_rpt_.data);
+    }
+    input_rpt_.capacity = (count * slen) + 1;
+    input_rpt_.data = (char *)options_.allocator(options_.userdata, input_rpt_.capacity);
+    input_rpt_.length = 0;
+
+    char* p = input_rpt_.data;
+    for (size_t i = 0; i < count; i++, p += slen) {
+      memcpy(p, s, slen);
+    }
+    *p = '\0';
+    return input_rpt_.data;
+  }
+
   MallocStats malloc_stats_;
   GumboOptions options_;
   GumboOutput* output_;
   GumboNode* root_;
+  GumboStringBuffer input_rpt_;
 };
+
+TEST_F(GumboParserTest, TreeDepthLimitEnforced) {
+  const char* input = string_repeat("<div>", kGumboDefaultOptions.max_tree_depth);
+
+  // Can't use Parse() here, since it asserts that status is GUMBO_STATUS_OK
+  Parse(input);
+
+  ASSERT_EQ(GUMBO_STATUS_TREE_TOO_DEEP, output_->status);
+  ASSERT_TRUE(root_);
+  ASSERT_EQ(GUMBO_NODE_DOCUMENT, root_->type);
+  EXPECT_EQ(GUMBO_INSERTION_BY_PARSER, root_->parse_flags);
+
+  GumboNode* html = GetChild(root_, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, html->type);
+  EXPECT_EQ(GUMBO_TAG_HTML, html->v.element.tag);
+  ASSERT_EQ(2, GetChildCount(html));
+
+  GumboNode* head = GetChild(html, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, head->type);
+  EXPECT_EQ(GUMBO_TAG_HEAD, head->v.element.tag);
+  EXPECT_EQ(0, GetChildCount(head));
+
+  GumboNode* body = GetChild(html, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, body->type);
+  EXPECT_EQ(GUMBO_TAG_BODY, body->v.element.tag);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  int depth;
+  GumboNode* content = body;
+  // depth starts at 2, because the parser-inserted <html>
+  // and <body> nodes make the tree 2 nodes deep to start with.
+  for (depth = 2;; depth++) {
+    content = GetChild(content, 0);
+    ASSERT_EQ(GUMBO_NODE_ELEMENT, content->type);
+    ASSERT_EQ(GUMBO_TAG_DIV, content->v.element.tag);
+    auto child_count = GetChildCount(content);
+    if (child_count == 0) 
+      break;
+    ASSERT_EQ(1, GetChildCount(content));
+  }
+  ASSERT_EQ(kGumboDefaultOptions.max_tree_depth, depth);
+}
+
+TEST_F(GumboParserTest, CustomTreeDepthLimit) {
+  options_.max_tree_depth = 800;
+
+  // 798 nested divs should parse as normal and not hit the depth
+  // limit set above
+  const char* div798 = string_repeat("<div>", 798);
+  Parse(div798);
+  ASSERT_EQ(GUMBO_STATUS_OK, output_->status);
+
+  GumboNode* html = GetChild(root_, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, html->type);
+  EXPECT_EQ(GUMBO_TAG_HTML, html->v.element.tag);
+  ASSERT_EQ(2, GetChildCount(html));
+
+  GumboNode* head = GetChild(html, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, head->type);
+  EXPECT_EQ(GUMBO_TAG_HEAD, head->v.element.tag);
+  EXPECT_EQ(0, GetChildCount(head));
+
+  GumboNode* body = GetChild(html, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, body->type);
+  EXPECT_EQ(GUMBO_TAG_BODY, body->v.element.tag);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  int depth;
+  GumboNode* content = body;
+  for (depth = 1;; depth++) {
+    content = GetChild(content, 0);
+    ASSERT_EQ(GUMBO_NODE_ELEMENT, content->type);
+    ASSERT_EQ(GUMBO_TAG_DIV, content->v.element.tag);
+    auto child_count = GetChildCount(content);
+    if (child_count == 0)
+      break;
+    ASSERT_EQ(1, GetChildCount(content));
+  }
+  ASSERT_EQ(798, depth);
+
+  // 799 nested divs exceeds the limit, because the parser-inserted
+  // <html> and <body> nodes make the tree 801 nodes deep.
+  const char* div799 = string_repeat("<div>", 799);
+  Parse(div799);
+  ASSERT_EQ(GUMBO_STATUS_TREE_TOO_DEEP, output_->status);
+
+  html = GetChild(root_, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, html->type);
+  EXPECT_EQ(GUMBO_TAG_HTML, html->v.element.tag);
+  ASSERT_EQ(2, GetChildCount(html));
+
+  head = GetChild(html, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, head->type);
+  EXPECT_EQ(GUMBO_TAG_HEAD, head->v.element.tag);
+  EXPECT_EQ(0, GetChildCount(head));
+
+  body = GetChild(html, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, body->type);
+  EXPECT_EQ(GUMBO_TAG_BODY, body->v.element.tag);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  content = body;
+  for (depth = 1;; depth++) {
+    content = GetChild(content, 0);
+    ASSERT_EQ(GUMBO_NODE_ELEMENT, content->type);
+    ASSERT_EQ(GUMBO_TAG_DIV, content->v.element.tag);
+    auto child_count = GetChildCount(content);
+    if (child_count == 0) 
+      break;
+    ASSERT_EQ(1, GetChildCount(content));
+  }
+  ASSERT_EQ(800, depth + 1);
+}
 
 TEST_F(GumboParserTest, NullDocument) {
   Parse("");
@@ -85,8 +222,20 @@ TEST_F(GumboParserTest, NullDocument) {
   ASSERT_EQ(GUMBO_NODE_DOCUMENT, root_->type);
   EXPECT_EQ(GUMBO_INSERTION_BY_PARSER, root_->parse_flags);
 
-  GumboNode* body;
-  GetAndAssertBody(root_, &body);
+  GumboNode* html = GetChild(root_, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, html->type);
+  EXPECT_EQ(GUMBO_TAG_HTML, html->v.element.tag);
+  ASSERT_EQ(2, GetChildCount(html));
+
+  GumboNode* head = GetChild(html, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, head->type);
+  EXPECT_EQ(GUMBO_TAG_HEAD, head->v.element.tag);
+  EXPECT_EQ(0, GetChildCount(head));
+
+  GumboNode* body = GetChild(html, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, body->type);
+  EXPECT_EQ(GUMBO_TAG_BODY, body->v.element.tag);
+  ASSERT_EQ(0, GetChildCount(body));
 }
 
 TEST_F(GumboParserTest, ParseTwice) {
@@ -99,8 +248,20 @@ TEST_F(GumboParserTest, ParseTwice) {
   ASSERT_TRUE(root_);
   ASSERT_EQ(GUMBO_NODE_DOCUMENT, root_->type);
 
-  GumboNode* body;
-  GetAndAssertBody(root_, &body);
+  GumboNode* html = GetChild(root_, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, html->type);
+  EXPECT_EQ(GUMBO_TAG_HTML, html->v.element.tag);
+  ASSERT_EQ(2, GetChildCount(html));
+
+  GumboNode* head = GetChild(html, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, head->type);
+  EXPECT_EQ(GUMBO_TAG_HEAD, head->v.element.tag);
+  EXPECT_EQ(0, GetChildCount(head));
+
+  GumboNode* body = GetChild(html, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, body->type);
+  EXPECT_EQ(GUMBO_TAG_BODY, body->v.element.tag);
+  ASSERT_EQ(0, GetChildCount(body));
 }
 
 TEST_F(GumboParserTest, OneChar) {
@@ -1111,6 +1272,23 @@ TEST_F(GumboParserTest, Form) {
   GumboNode* text = GetChild(body, 1);
   ASSERT_EQ(GUMBO_NODE_TEXT, text->type);
   EXPECT_STREQ("After form", text->v.text.text);
+}
+
+// See: https://github.com/google/gumbo-parser/issues/350
+TEST_F(GumboParserTest, FormEndPos) {
+  Parse(" <form><input type=hidden /></form>");
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  GumboNode* form = GetChild(body, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, form->type);
+  EXPECT_EQ(GUMBO_TAG_FORM, GetTag(form));
+  ASSERT_EQ(1, GetChildCount(form));
+
+  ASSERT_EQ(form->v.element.start_pos.offset, 1);
+  ASSERT_EQ(form->v.element.end_pos.offset, 28);
 }
 
 TEST_F(GumboParserTest, NestedForm) {

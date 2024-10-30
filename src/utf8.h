@@ -44,8 +44,7 @@ extern "C" {
 struct GumboInternalError;
 struct GumboInternalParser;
 
-// Unicode replacement char.
-extern const int kUtf8ReplacementChar;
+#define UNICODE_REPLACEMENT_CHAR 0xFFFD
 
 typedef struct GumboInternalUtf8Iterator {
   // Points at the start of the code point most recently read into 'current'.
@@ -81,8 +80,7 @@ bool utf8_is_invalid_code_point(int c);
 
 // Initializes a new Utf8Iterator from the given byte buffer.  The source does
 // not have to be NUL-terminated, but the length must be passed in explicitly.
-void utf8iterator_init(struct GumboInternalParser* parser, const char* source,
-    size_t source_length, Utf8Iterator* iter);
+void utf8iterator_init(struct GumboInternalParser* parser, const char* source, size_t source_length, Utf8Iterator* iter);
 
 // Advances the current position by one code point.
 void utf8iterator_next(Utf8Iterator* iter);
