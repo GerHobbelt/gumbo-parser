@@ -7,6 +7,7 @@
 #include "parser.h"
 #include "string_buffer.h"
 #include "vector.h"
+#include "util.h"
 
 #define DEFAULT_VECTOR_SIZE 10
 
@@ -50,7 +51,9 @@ XpathSegType gumbo_eval_xpath_from_nodes(GumboParser* parser, GumboVector *doc_n
 
 void gumbo_compile_xpath(GumboParser *parser, const char *xpath, GumboVector *xpath_segs);
 
-void gumbo_dup_xpath_segs(GumboVector *xpath_segs);
+#if defined(GUMBO_DEBUG)
+void gumbo_dump_xpath_segs(GumboParser *parser, GumboVector *xpath_segs);
+#endif
 
 #ifdef __cplusplus
 }

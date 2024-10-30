@@ -943,6 +943,7 @@ void gumbo_print_caret_diagnostic (
 
 #if defined(BUILD_MONOLITHIC)
 int gumbo_benchmark_main(int argc, const char** argv);
+int gumbo_eval_xpath_main(int argc, const char** argv);
 int gumbo_clean_text_main(int argc, const char** argv);
 int gumbo_find_links_main(int argc, const char** argv);
 int gumbo_get_title_main(int argc, const char** argv);
