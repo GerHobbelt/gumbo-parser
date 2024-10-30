@@ -37,9 +37,21 @@ clean-local:
 
 endif !HAVE_SHARED_LIBGTEST
 
-gentags: src/tag.in
+if PYTHON_FOUND
+if GPERF_FOUND
+@srcdir@/src/tag_gperf.h: src/tag.in gentags.py genperf.py
+	@echo GENPERF $<
 	@python gentags.py $<
-	@gperf -LANSI-C --ignore-case -m200 $< |python genperf.py >src/tag_gperf.h
+	@echo GPERF $<
+	@gperf -LANSI-C --ignore-case -m200 $< |python genperf.py >@srcdir@/src/tag_gperf.h
+endif
+endif
+
+if RAGEL_FOUND
+@srcdir@/src/char_ref.c: src/char_ref.rl
+	@echo RAGEL src/char_ref.rl
+	@cd @srcdir@/src && ragel -F0 char_ref.rl > char_ref.c
+endif
 
 lib_LTLIBRARIES = libgumbo.la
 libgumbo_la_CFLAGS = -Wall
@@ -72,8 +84,10 @@ libgumbo_la_SOURCES = \
 				src/util.c \
 				src/util.h \
 				src/vector.c \
-				src/vector.h
-include_HEADERS = src/gumbo.h src/tag_enum.h
+				src/vector.h \
+                src/xpath.h \
+                src/xpath.c
+include_HEADERS = src/gumbo.h src/tag_enum.h src/vector.h src/xpath.h src/parser.h src/string_buffer.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gumbo.pc
@@ -91,9 +105,11 @@ gumbo_test_SOURCES = \
 				tests/string_buffer.cc \
 				tests/string_piece.cc \
 				tests/tokenizer.cc \
+				tests/tag.cc \
 				tests/test_utils.cc \
 				tests/utf8.cc \
-				tests/vector.cc
+				tests/vector.cc \
+				tests/error.cc
 gumbo_test_DEPENDENCIES = libgumbo.la
 gumbo_test_LDADD = libgumbo.la
 
@@ -105,9 +121,12 @@ gumbo_test_DEPENDENCIES += check-local
 gumbo_test_LDADD += gtest/lib/libgtest.la gtest/lib/libgtest_main.la
 endif
 
-noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint
+if HAVE_EXAMPLES
+noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint print evalxpath
+endif
 LDADD = libgumbo.la
 AM_CPPFLAGS = -I"$(srcdir)/src"
+AM_CXXFLAGS = -std=c++11 -I"$(srcdir)/src"
 
 clean_text_SOURCES = examples/clean_text.cc
 find_links_SOURCES = examples/find_links.cc
@@ -116,3 +135,5 @@ positions_of_class_SOURCES = examples/positions_of_class.cc
 benchmark_SOURCES = benchmarks/benchmark.cc
 serialize_SOURCES = examples/serialize.cc
 prettyprint_SOURCES = examples/prettyprint.cc
+print_SOURCES = tools/print.cc
+evalxpath_SOURCES = examples/eval_xpath.cc

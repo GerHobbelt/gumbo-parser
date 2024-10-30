@@ -77,3 +77,7 @@ get_title
 positions_of_class
 prettyprint
 serialize
+
+# Tools binaries
+print
+/tmp

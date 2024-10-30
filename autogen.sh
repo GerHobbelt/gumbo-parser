@@ -15,10 +15,10 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 if test -z "$LIBTOOLIZE" -a "`uname`" = "Darwin"; then
-	if command -v "glibtoolize" >/dev/null; then
-		LIBTOOLIZE=glibtoolize
-	elif command -v "libtoolize" >/dev/null; then
+	if command -v "libtoolize" >/dev/null; then
 		LIBTOOLIZE=libtoolize
+	elif command -v "glibtoolize" >/dev/null; then
+		LIBTOOLIZE=glibtoolize
 	else
 		echo "autogen.sh: line $LINENO: command glibtoolize or libtoolize not found"
 		exit 1
