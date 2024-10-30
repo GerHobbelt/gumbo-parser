@@ -27,9 +27,7 @@ int GetChildCount(GumboNode* node) {
   }
 }
 
-GumboTag GetTag(GumboNode* node) {
-  return node->v.element.tag;
-}
+GumboTag GetTag(GumboNode* node) { return node->v.element.tag; }
 
 GumboNode* GetChild(GumboNode* parent, int index) {
   if (parent->type == GUMBO_NODE_DOCUMENT) {
@@ -83,15 +81,15 @@ void GetAndAssertBody(GumboNode* root, GumboNode** body) {
       *body = child;
       EXPECT_EQ(GUMBO_TAG_BODY, GetTag(*body));
     } else {
-      ASSERT_TRUE("More than two elements found inside <html>" != NULL);
+      ASSERT_TRUE(!"More than two elements found inside <html>");
     }
   }
   EXPECT_TRUE(head != NULL);
   ASSERT_TRUE(*body != NULL);
 }
 
-void SanityCheckPointers(const char* input, size_t input_length,
-                         const GumboNode* node, int depth) {
+void SanityCheckPointers(
+    const char* input, size_t input_length, const GumboNode* node, int depth) {
   ASSERT_GE(input_length, (size_t) 0);
   ASSERT_TRUE(node != NULL);
   // There are some truly pathological HTML documents out there - the
@@ -155,7 +153,7 @@ static void* LeakDetectingMalloc(void* userdata, size_t size) {
   ++stats->objects_allocated;
   // Arbitrary limit of 2G on allocation; parsing any reasonable document
   // shouldn't take more than that.
-  assert(stats->bytes_allocated < (1 << 31));
+  assert(stats->bytes_allocated < (1UL << 31));
   void* obj = malloc(size);
   // gumbo_debug("Allocated %u bytes at %x.\n", size, obj);
   return obj;
@@ -170,6 +168,24 @@ static void LeakDetectingFree(void* userdata, void* ptr) {
   }
 }
 
+static void* LeakDetectingRealloc(void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes) {
+  MallocStats* stats = static_cast<MallocStats*>(userdata);
+  stats->bytes_allocated += new_num_bytes;
+  ++stats->objects_allocated;
+  // Arbitrary limit of 2G on allocation; parsing any reasonable document
+  // shouldn't take more than that.
+  assert(stats->bytes_allocated < (1UL << 31));
+  void* obj = malloc(new_num_bytes);
+  // gumbo_debug("Allocated %u bytes at %x.\n", new_num_bytes, obj);
+
+	memcpy(obj, ptr, old_num_bytes);
+
+	++stats->objects_freed;
+  // gumbo_debug("Freed %x.\n");
+  free(ptr);
+  return obj;
+}
+
 void InitLeakDetection(GumboOptions* options, MallocStats* stats) {
   stats->bytes_allocated = 0;
   stats->objects_allocated = 0;
@@ -177,14 +193,12 @@ void InitLeakDetection(GumboOptions* options, MallocStats* stats) {
 
   options->allocator = LeakDetectingMalloc;
   options->deallocator = LeakDetectingFree;
+  options->reallocator = LeakDetectingRealloc;
   options->userdata = stats;
 }
 
-
-GumboTest::GumboTest() :
-    options_(kGumboDefaultOptions),
-    errors_are_expected_(false),
-    text_("")  {
+GumboTest::GumboTest()
+    : options_(kGumboDefaultOptions), errors_are_expected_(false), text_("") {
   InitLeakDetection(&options_, &malloc_stats_);
   options_.max_errors = 100;
   parser_._options = &options_;
@@ -199,9 +213,8 @@ GumboTest::~GumboTest() {
     // this; we only want to pretty-print errors that are not an expected
     // output of the test.
     for (int i = 0; i < parser_._output->errors.length && i < 1; ++i) {
-      gumbo_print_caret_diagnostic(
-          &parser_, static_cast<GumboError*>(
-              parser_._output->errors.data[i]), text_);
+      gumbo_print_caret_diagnostic(&parser_,
+          static_cast<GumboError*>(parser_._output->errors.data[i]), text_);
     }
   }
   gumbo_destroy_errors(&parser_);

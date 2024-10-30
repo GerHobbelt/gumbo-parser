@@ -15,22 +15,20 @@
 // Author: jdtang@google.com (Jonathan Tang)
 
 #include "tokenizer.h"
+#include "gumbo.h"          // getGumboTagNamesList()
 
 #include <stdio.h>
 
 #include "gtest/gtest.h"
 #include "test_utils.h"
 
-extern const char* kGumboTagNames[];
 
 namespace {
 
 // Tests for tokenizer.c
 class GumboTokenizerTest : public GumboTest {
  protected:
-  GumboTokenizerTest() {
-    gumbo_tokenizer_state_init(&parser_, "", 0);
-  }
+  GumboTokenizerTest() { gumbo_tokenizer_state_init(&parser_, "", 0); }
 
   virtual ~GumboTokenizerTest() {
     gumbo_tokenizer_state_destroy(&parser_);
@@ -53,9 +51,45 @@ class GumboTokenizerTest : public GumboTest {
   GumboToken token_;
 };
 
-TEST(GumboTagEnumTest, TagEnumIncludesAllTags) {
-  EXPECT_EQ(149, GUMBO_TAG_UNKNOWN);
+TEST_F(GumboTokenizerTest, TagEnumIncludesAllTags) {
+  EXPECT_EQ(150, GUMBO_TAG_UNKNOWN);
+
+  auto kGumboTagNames = getGumboTagNamesList();
   EXPECT_STREQ("", kGumboTagNames[GUMBO_TAG_UNKNOWN]);
+
+  EXPECT_STREQ("", gumbo_normalized_tagname(GUMBO_TAG_UNKNOWN));
+
+  EXPECT_EQ(0, GUMBO_TAG_HTML);
+  for (unsigned int i = 0; i < (unsigned int) GUMBO_TAG_UNKNOWN; i++) {
+    const char* tagname = gumbo_normalized_tagname((GumboTag)i);
+    EXPECT_FALSE(tagname == NULL);
+    EXPECT_FALSE(tagname[0] == '\0');
+    EXPECT_TRUE(strlen(tagname) < 15);
+  }
+  EXPECT_STREQ("", gumbo_normalized_tagname(GUMBO_TAG_UNKNOWN));
+  EXPECT_STREQ("html", gumbo_normalized_tagname(GUMBO_TAG_HTML));
+  EXPECT_STREQ("a", gumbo_normalized_tagname(GUMBO_TAG_A));
+  //EXPECT_STREQ("dialog", gumbo_normalized_tagname(GUMBO_TAG_DIALOG));
+  EXPECT_STREQ("template", gumbo_normalized_tagname(GUMBO_TAG_TEMPLATE));
+}
+
+TEST_F(GumboTokenizerTest, TagLookupCaseSensitivity) {
+  EXPECT_EQ(GUMBO_TAG_HTML, gumbo_tagn_enum("HTML", 4));
+  EXPECT_EQ(GUMBO_TAG_BODY, gumbo_tagn_enum("boDy", 4));
+  EXPECT_EQ(GUMBO_TAG_A, gumbo_tagn_enum("A", 1));
+  EXPECT_EQ(GUMBO_TAG_A, gumbo_tagn_enum("a", 1));
+  EXPECT_EQ(GUMBO_TAG_TEMPLATE, gumbo_tagn_enum("Template", 8));
+  //EXPECT_EQ(GUMBO_TAG_DIALOG, gumbo_tagn_enum("diAloG", 6));
+  EXPECT_EQ(GUMBO_TAG_ANNOTATION_XML, gumbo_tagn_enum("annotation-xml", 14));
+  EXPECT_EQ(GUMBO_TAG_ANNOTATION_XML, gumbo_tagn_enum("ANNOTATION-XML", 14));
+  EXPECT_EQ(GUMBO_TAG_UNKNOWN, gumbo_tagn_enum("ANNOTATION-XML-", 15));
+  EXPECT_EQ(GUMBO_TAG_UNKNOWN, gumbo_tagn_enum("ANNOTATION-XM", 13));
+  EXPECT_EQ(GUMBO_TAG_UNKNOWN, gumbo_tagn_enum("", 0));
+  EXPECT_EQ(GUMBO_TAG_B, gumbo_tagn_enum("b", 1));
+  EXPECT_EQ(GUMBO_TAG_I, gumbo_tagn_enum("i", 1));
+  EXPECT_EQ(GUMBO_TAG_U, gumbo_tagn_enum("u", 1));
+  EXPECT_EQ(GUMBO_TAG_UNKNOWN, gumbo_tagn_enum("x", 1));
+  EXPECT_EQ(GUMBO_TAG_UNKNOWN, gumbo_tagn_enum("c", 1));
 }
 
 TEST_F(GumboTokenizerTest, PartialTag) {
@@ -117,8 +151,9 @@ TEST_F(GumboTokenizerTest, LexCharRef_NotCharRef) {
 }
 
 TEST_F(GumboTokenizerTest, LeadingWhitespace) {
-  SetInput("<div>\n"
-           "  <span class=foo>");
+  SetInput(
+      "<div>\n"
+      "  <span class=foo>");
   Advance(4);
   EXPECT_TRUE(gumbo_lex(&parser_, &token_));  // <span>
 
@@ -157,9 +192,10 @@ TEST_F(GumboTokenizerTest, Doctype) {
 }
 
 TEST_F(GumboTokenizerTest, DoctypePublic) {
-  SetInput("<!DOCTYPE html PUBLIC "
-           "\"-//W3C//DTD XHTML 1.0 Transitional//EN\" "
-           "'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>");
+  SetInput(
+      "<!DOCTYPE html PUBLIC "
+      "\"-//W3C//DTD XHTML 1.0 Transitional//EN\" "
+      "'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>");
   EXPECT_TRUE(gumbo_lex(&parser_, &token_));
   ASSERT_EQ(GUMBO_TOKEN_DOCTYPE, token_.type);
   EXPECT_EQ(0, token_.position.offset);
@@ -169,10 +205,10 @@ TEST_F(GumboTokenizerTest, DoctypePublic) {
   EXPECT_TRUE(doc_type->has_public_identifier);
   EXPECT_TRUE(doc_type->has_system_identifier);
   EXPECT_STREQ("html", doc_type->name);
-  EXPECT_STREQ("-//W3C//DTD XHTML 1.0 Transitional//EN",
-               doc_type->public_identifier);
+  EXPECT_STREQ(
+      "-//W3C//DTD XHTML 1.0 Transitional//EN", doc_type->public_identifier);
   EXPECT_STREQ("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
-               doc_type->system_identifier);
+      doc_type->system_identifier);
 }
 
 TEST_F(GumboTokenizerTest, DoctypeSystem) {
@@ -187,6 +223,20 @@ TEST_F(GumboTokenizerTest, DoctypeSystem) {
   EXPECT_TRUE(doc_type->has_system_identifier);
   EXPECT_STREQ("root_element", doc_type->name);
   EXPECT_STREQ("DTD_location", doc_type->system_identifier);
+}
+
+TEST_F(GumboTokenizerTest, DoctypeUnterminated) {
+  SetInput("<!DOCTYPE a PUBLIC''");
+  EXPECT_FALSE(gumbo_lex(&parser_, &token_));
+  ASSERT_EQ(GUMBO_TOKEN_DOCTYPE, token_.type);
+  EXPECT_EQ(0, token_.position.offset);
+
+  GumboTokenDocType* doc_type = &token_.v.doc_type;
+  EXPECT_TRUE(doc_type->force_quirks);
+  EXPECT_TRUE(doc_type->has_public_identifier);
+  EXPECT_FALSE(doc_type->has_system_identifier);
+  EXPECT_STREQ("a", doc_type->name);
+  EXPECT_STREQ("", doc_type->system_identifier);
 }
 
 TEST_F(GumboTokenizerTest, RawtextEnd) {
@@ -291,9 +341,10 @@ TEST_F(GumboTokenizerTest, ScriptEscapedEnd) {
 }
 
 TEST_F(GumboTokenizerTest, ScriptCommentEscaped) {
-  SetInput("<script><!-- var foo = x < 7 + '</div>-- <A href=\"foo\"></a>';\n"
-           "-->\n"
-           "</script>");
+  SetInput(
+      "<script><!-- var foo = x < 7 + '</div>-- <A href=\"foo\"></a>';\n"
+      "-->\n"
+      "</script>");
   Advance(1);
   gumbo_tokenizer_set_state(&parser_, GUMBO_LEX_SCRIPT);
   Advance(15);
@@ -340,7 +391,6 @@ TEST_F(GumboTokenizerTest, ScriptCommentEscaped) {
   gumbo_token_destroy(&parser_, &token_);
   Advance(25);
 }
-
 
 TEST_F(GumboTokenizerTest, ScriptEscapedEmbeddedLessThan) {
   SetInput("<script>/*<![CDATA[*/ x<7 /*]]>*/</script>");
@@ -399,8 +449,9 @@ TEST_F(GumboTokenizerTest, ScriptHasTagEmbedded) {
 }
 
 TEST_F(GumboTokenizerTest, ScriptDoubleEscaped) {
-  SetInput("<script><!--var foo = '<a href=\"foo\"></a>\n"
-           "<sCrIpt>i--<f</script>'-->;</script>");
+  SetInput(
+      "<script><!--var foo = '<a href=\"foo\"></a>\n"
+      "<sCrIpt>i--<f</script>'-->;</script>");
   Advance(1);
   gumbo_tokenizer_set_state(&parser_, GUMBO_LEX_SCRIPT);
   Advance(34);
@@ -434,6 +485,24 @@ TEST_F(GumboTokenizerTest, ScriptDoubleEscaped) {
   EXPECT_TRUE(gumbo_lex(&parser_, &token_));
   EXPECT_EQ(GUMBO_TOKEN_CHARACTER, token_.type);
   EXPECT_EQ('>', token_.v.character);
+}
+
+TEST_F(GumboTokenizerTest, CData) {
+  // SetInput uses strlen and so can't handle nulls.
+  text_ = "<![CDATA[\0filler\0text\0]]>";
+  gumbo_tokenizer_state_destroy(&parser_);
+  gumbo_tokenizer_state_init(
+      &parser_, text_, sizeof("<![CDATA[\0filler\0text\0]]>") - 1);
+  gumbo_tokenizer_set_is_current_node_foreign(&parser_, true);
+
+  EXPECT_TRUE(gumbo_lex(&parser_, &token_));
+  EXPECT_EQ(GUMBO_TOKEN_NULL, token_.type);
+  EXPECT_EQ(0, token_.v.character);
+
+  gumbo_token_destroy(&parser_, &token_);
+  EXPECT_TRUE(gumbo_lex(&parser_, &token_));
+  EXPECT_EQ(GUMBO_TOKEN_CDATA, token_.type);
+  EXPECT_EQ('f', token_.v.character);
 }
 
 TEST_F(GumboTokenizerTest, StyleHasTagEmbedded) {
@@ -551,9 +620,11 @@ TEST_F(GumboTokenizerTest, MultilineAttribute) {
       static_cast<GumboAttribute*>(start_tag->attributes.data[0]);
   EXPECT_STREQ("long_attr", long_attr->name);
   EXPECT_EQ("long_attr", ToString(long_attr->original_name));
-  EXPECT_STREQ("SomeCode;\n"
-               "  calls_a_big_long_function();\n"
-               "  return true;", long_attr->value);
+  EXPECT_STREQ(
+      "SomeCode;\n"
+      "  calls_a_big_long_function();\n"
+      "  return true;",
+      long_attr->value);
 }
 
 TEST_F(GumboTokenizerTest, DoubleAmpersand) {

@@ -22,24 +22,29 @@ Pythonic API.
 
 __author__ = 'jdtang@google.com (Jonathan Tang)'
 
+import sys
 import contextlib
 import ctypes
 import os.path
+from gumbo import gumboc_tags
+
+_name_of_lib = 'libgumbo.so'
+if sys.platform.startswith('darwin'):
+  _name_of_lib = 'libgumbo.dylib'
+elif sys.platform.startswith('win'):
+  _name_of_lib = "gumbo.dll"
 
 try:
   # First look for a freshly-built .so in the .libs directory, for development.
   _dll = ctypes.cdll.LoadLibrary(os.path.join(
-      os.path.dirname(__file__), '..', '..', '.libs', 'libgumbo.so'))
+      os.path.dirname(__file__), '..', '..', '.libs', _name_of_lib))
 except OSError:
   # PyPI or setuptools install, look in the current directory.
   _dll = ctypes.cdll.LoadLibrary(os.path.join(
-      os.path.dirname(__file__), 'libgumbo.so'))
+      os.path.dirname(__file__), _name_of_lib))
 except OSError:
-  # System library, on unix
-  _dll = ctypes.cdll.LoadLibrary('libgumbo.so')
-except OSError:
-  # MacOS X
-  _dll = ctypes.cdll.LoadLibrary('libgumbo.dylib')
+  # System library, on unix or mac osx
+  _dll = ctypes.cdll.LoadLibrary(_name_of_lib)
 
 # Some aliases for common types.
 _bitvector = ctypes.c_uint
@@ -242,159 +247,12 @@ class Namespace(Enum):
 
 
 class Tag(Enum):
-  _values_ = [
-      'HTML',
-      'HEAD',
-      'TITLE',
-      'BASE',
-      'LINK',
-      'META',
-      'STYLE',
-      'SCRIPT',
-      'NOSCRIPT',
-      'TEMPLATE',
-      'BODY',
-      'ARTICLE',
-      'SECTION',
-      'NAV',
-      'ASIDE',
-      'H1',
-      'H2',
-      'H3',
-      'H4',
-      'H5',
-      'H6',
-      'HGROUP',
-      'HEADER',
-      'FOOTER',
-      'ADDRESS',
-      'P',
-      'HR',
-      'PRE',
-      'BLOCKQUOTE',
-      'OL',
-      'UL',
-      'LI',
-      'DL',
-      'DT',
-      'DD',
-      'FIGURE',
-      'FIGCAPTION',
-      'MAIN',
-      'DIV',
-      'A',
-      'EM',
-      'STRONG',
-      'SMALL',
-      'S',
-      'CITE',
-      'Q',
-      'DFN',
-      'ABBR',
-      'DATA',
-      'TIME',
-      'CODE',
-      'VAR',
-      'SAMP',
-      'KBD',
-      'SUB',
-      'SUP',
-      'I',
-      'B',
-      'U',
-      'MARK',
-      'RUBY',
-      'RT',
-      'RP',
-      'BDI',
-      'BDO',
-      'SPAN',
-      'BR',
-      'WBR',
-      'INS',
-      'DEL',
-      'IMAGE',
-      'IMG',
-      'IFRAME',
-      'EMBED',
-      'OBJECT',
-      'PARAM',
-      'VIDEO',
-      'AUDIO',
-      'SOURCE',
-      'TRACK',
-      'CANVAS',
-      'MAP',
-      'AREA',
-      'MATH',
-      'MI',
-      'MO',
-      'MN',
-      'MS',
-      'MTEXT',
-      'MGLYPH',
-      'MALIGNMARK',
-      'ANNOTATION_XML',
-      'SVG',
-      'FOREIGNOBJECT',
-      'DESC',
-      'TABLE',
-      'CAPTION',
-      'COLGROUP',
-      'COL',
-      'TBODY',
-      'THEAD',
-      'TFOOT',
-      'TR',
-      'TD',
-      'TH',
-      'FORM',
-      'FIELDSET',
-      'LEGEND',
-      'LABEL',
-      'INPUT',
-      'BUTTON',
-      'SELECT',
-      'DATALIST',
-      'OPTGROUP',
-      'OPTION',
-      'TEXTAREA',
-      'KEYGEN',
-      'OUTPUT',
-      'PROGRESS',
-      'METER',
-      'DETAILS',
-      'SUMMARY',
-      'MENU',
-      'MENUITEM',
-      'APPLET',
-      'ACRONYM',
-      'BGSOUND',
-      'DIR',
-      'FRAME',
-      'FRAMESET',
-      'NOFRAMES',
-      'ISINDEX',
-      'LISTING',
-      'XMP',
-      'NEXTID',
-      'NOEMBED',
-      'PLAINTEXT',
-      'RB',
-      'STRIKE',
-      'BASEFONT',
-      'BIG',
-      'BLINK',
-      'CENTER',
-      'FONT',
-      'MARQUEE',
-      'MULTICOL',
-      'NOBR',
-      'SPACER',
-      'TT',
-      'UNKNOWN',
-      ]
+  @staticmethod
+  def from_str(tagname):
+    text_ptr = ctypes.c_char_p(tagname.encode('utf-8'))
+    return _tag_enum(text_ptr)
 
+  _values_ = gumboc_tags.TagNames + ['UNKNOWN', 'LAST']
 
 class Element(ctypes.Structure):
   _fields_ = [
@@ -440,7 +298,8 @@ class Text(ctypes.Structure):
 
 
 class NodeType(Enum):
-  _values_ = ['DOCUMENT', 'ELEMENT', 'TEXT', 'CDATA', 'COMMENT', 'WHITESPACE']
+  _values_ = ['DOCUMENT', 'ELEMENT', 'TEXT', 'CDATA',
+              'COMMENT', 'WHITESPACE', 'TEMPLATE']
 
 
 class NodeUnion(ctypes.Union):
@@ -459,7 +318,7 @@ class Node(ctypes.Structure):
     # __getattr__, so we factor it out to a helper.
     if self.type == NodeType.DOCUMENT:
       return self.v.document
-    elif self.type == NodeType.ELEMENT:
+    elif self.type in (NodeType.ELEMENT, NodeType.TEMPLATE):
       return self.v.element
     else:
       return self.v.text
@@ -482,8 +341,6 @@ Node._fields_ = [
     ('type', NodeType),
     # Set the type to Node later to avoid a circular dependency.
     ('parent', _Ptr(Node)),
-    ('next', _Ptr(Node)),
-    ('prev', _Ptr(Node)),
     ('index_within_parent', ctypes.c_size_t),
     # TODO(jdtang): Make a real list of enum constants for this.
     ('parse_flags', _bitvector),
@@ -502,6 +359,8 @@ class Options(ctypes.Structure):
       ('tab_stop', ctypes.c_int),
       ('stop_on_first_error', ctypes.c_bool),
       ('max_errors', ctypes.c_int),
+      ('fragment_context', Tag),
+      ('fragment_namespace', Namespace),
       ]
 
 
@@ -512,7 +371,6 @@ class Output(ctypes.Structure):
       # TODO(jdtang): Error type.
       ('errors', Vector),
       ]
-
 
 @contextlib.contextmanager
 def parse(text, **kwargs):
@@ -554,6 +412,10 @@ _destroy_output.restype = None
 _tagname = _dll.gumbo_normalized_tagname
 _tagname.argtypes = [Tag]
 _tagname.restype = ctypes.c_char_p
+
+_tag_enum = _dll.gumbo_tag_enum
+_tag_enum.argtypes = [ctypes.c_char_p]
+_tag_enum.restype = Tag
 
 __all__ = ['StringPiece', 'SourcePosition', 'AttributeNamespace', 'Attribute',
            'Vector', 'AttributeVector', 'NodeVector', 'QuirksMode', 'Document',

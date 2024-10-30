@@ -35,22 +35,27 @@ static void search_for_links(GumboNode* node) {
   }
 
   GumboVector* children = &node->v.element.children;
-  for (int i = 0; i < children->length; ++i) {
+  for (unsigned int i = 0; i < children->length; ++i) {
     search_for_links(static_cast<GumboNode*>(children->data[i]));
   }
 }
 
-int main(int argc, char** argv) {
+
+#if defined(BUILD_MONOLITHIC)
+#define main		gumbo_find_links_main
+#endif
+
+int main(int argc, const char** argv) {
   if (argc != 2) {
     std::cout << "Usage: find_links <html filename>.\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   const char* filename = argv[1];
 
   std::ifstream in(filename, std::ios::in | std::ios::binary);
   if (!in) {
     std::cout << "File " << filename << " not found!\n";
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   std::string contents;
@@ -63,4 +68,6 @@ int main(int argc, char** argv) {
   GumboOutput* output = gumbo_parse(contents.c_str());
   search_for_links(output->root);
   gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+  return EXIT_SUCCESS;
 }
