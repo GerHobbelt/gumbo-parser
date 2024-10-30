@@ -1972,9 +1972,8 @@ TEST_F(GumboParserTest, OutOfMemory) {
       return (void*) nullptr;
     }
   };
-  const char buf[] =
-      "<html><head><title>dummy</title></head><body>some text</body></html>";
-  GumboOutput* output;
+  const char buf[] = "<html><head><title>dummy</title></head><body>some text</body></html>";
+  GumboOutput *output;
   do {
     output = gumbo_parse_with_options(&options, buf, sizeof buf - 1);
   } while (output == nullptr);

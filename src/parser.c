@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <setjmp.h>
 
 #include "attribute.h"
 #include "error.h"
@@ -2410,6 +2411,8 @@ tailcall:
 
 static size_t destroy_one_node(void* parser_, GumboNode* node) {
   GumboParser* parser = (GumboParser*) parser_;
+  if (NULL == node)
+    return;
   switch (node->type) {
     case GUMBO_NODE_DOCUMENT: {
       GumboDocument* doc = &node->v.document;
@@ -4154,8 +4157,10 @@ GumboOutput* gumbo_parse_with_options(
   parser._options = options;
 
   if (SETJMP(parser._oom_buf)) {
-    if (parser._parser_state) parser_state_destroy(&parser);
-    if (parser._tokenizer_state) gumbo_tokenizer_state_destroy(&parser);
+    if (parser._parser_state)
+      parser_state_destroy(&parser);
+    if (parser._tokenizer_state)
+      gumbo_tokenizer_state_destroy(&parser);
     return NULL;
   }
 
@@ -4163,7 +4168,8 @@ GumboOutput* gumbo_parse_with_options(
   gumbo_tokenizer_state_init(&parser, buffer, length);
   parser_state_init(&parser);
 
-  if (NULL == parser._parser_state) return NULL;
+  if (NULL == parser._parser_state)
+    return NULL;
 
   if (options->fragment_context != GUMBO_TAG_LAST) {
     fragment_parser_init(
@@ -4264,7 +4270,8 @@ void gumbo_destroy_node(GumboOptions* options, GumboNode* node) {
 }
 
 void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
-  if (NULL == output) return;
+  if (NULL == output)
+    return;
   // Need a dummy GumboParser because the allocator comes along with the
   // options object.
   GumboParser parser;
