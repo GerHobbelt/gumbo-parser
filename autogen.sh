@@ -26,7 +26,7 @@ if test -z "$LIBTOOLIZE" -a "`uname`" = "Darwin"; then
 fi
 
 set -ex
-${LIBTOOLIZE:-libtoolize}
-${ACLOCAL:-aclocal -I m4}
-${AUTOCONF:-autoconf}
+${LIBTOOLIZE:-libtoolize} "$@"
+${ACLOCAL:-aclocal -I m4} "$@"
+${AUTOCONF:-autoconf} "$@"
 ${AUTOMAKE:-automake} --add-missing
