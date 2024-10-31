@@ -1562,7 +1562,7 @@ static bool is_special_node(const GumboNode* node) {
       (gumbo_tagset){TAG(ADDRESS), TAG(APPLET), TAG(AREA), TAG(ARTICLE),
           TAG(ASIDE), TAG(BASE), TAG(BASEFONT), TAG(BGSOUND), TAG(BLOCKQUOTE),
           TAG(BODY), TAG(BR), TAG(BUTTON), TAG(CAPTION), TAG(CENTER), TAG(COL),
-          TAG(COLGROUP), TAG(MENUITEM), TAG(DD), TAG(DETAILS), TAG(DIR),
+          TAG(COLGROUP), TAG(DD), TAG(DETAILS), TAG(DIR),
           TAG(DIV), TAG(DL), TAG(DT), TAG(EMBED), TAG(FIELDSET),
           TAG(FIGCAPTION), TAG(FIGURE), TAG(FOOTER), TAG(FORM), TAG(FRAME),
           TAG(FRAMESET), TAG(H1), TAG(H2), TAG(H3), TAG(H4), TAG(H5), TAG(H6),
@@ -2176,7 +2176,7 @@ static bool handle_in_head(GumboParser* parser, GumboToken* token) {
     return handle_in_body(parser, token);
   } else if (tag_in(token, kStartTag,
                  (gumbo_tagset){TAG(BASE), TAG(BASEFONT), TAG(BGSOUND),
-                     TAG(MENUITEM), TAG(LINK)})) {
+                     TAG(LINK)})) {
     insert_element_from_token(parser, token);
     pop_current_node(parser);
     acknowledge_self_closing_tag(parser);
@@ -2466,7 +2466,7 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     return false;
   } else if (tag_in(token, kStartTag,
                  (gumbo_tagset){TAG(BASE), TAG(BASEFONT), TAG(BGSOUND),
-                     TAG(MENUITEM), TAG(LINK), TAG(META), TAG(NOFRAMES),
+                     TAG(LINK), TAG(META), TAG(NOFRAMES),
                      TAG(SCRIPT), TAG(STYLE), TAG(TEMPLATE), TAG(TITLE)}) ||
              tag_is(token, kEndTag, GUMBO_TAG_TEMPLATE)) {
     return handle_in_head(parser, token);
