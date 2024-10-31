@@ -9,7 +9,7 @@ cd gumbo-parser
 ./autogen.sh
 ./configure
 rm -rf gtest
-git clone --depth 1 https://github.com/google/googletest.git -b v1.14.0 gtest
+git clone --depth 1 https://github.com/google/googletest.git -b v1.15.2 gtest
 make check
 ```
 
