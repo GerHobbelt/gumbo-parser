@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.65])
+AC_PREREQ([2.72])
 AC_INIT([gumbo], [0.12.1], [txgk@bk.ru])
 AC_SUBST(gumbo_version_info, [2:1:0])
 AC_CONFIG_MACRO_DIR([m4])
@@ -10,8 +10,8 @@ AC_CONFIG_SRCDIR([src/parser.c])
 AC_CONFIG_FILES([Makefile gumbo.pc])
 
 # Checks for programs.
+AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_CC_C99
 
 # Checks for libraries.
 
