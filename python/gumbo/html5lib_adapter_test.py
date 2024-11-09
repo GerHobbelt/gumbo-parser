@@ -141,10 +141,13 @@ class Html5libAdapterTest(unittest.TestCase):
     # word 'contents', so we need to reformat that string a bit.
     expected = reformatTemplateContents(expected)
 
-    error_msg = '\n'.join(['\n\nInput:', input, '\nExpected:', expected,
-                           '\nReceived:', output])
+    error_msg = '\n'.join([
+        '\n\nINPUT:',  input,
+        '\nOUTPUT:',   output,
+        '\nEXPECTED:', expected
+    ])
     self.assertEqual(expected, output,
-                     error_msg.encode('ascii', 'xmlcharrefreplace') + b'\n')
+                     error_msg.encode('ascii', 'xmlcharrefreplace').decode())
     # TODO(jdtang): Check error messages, when there's full error support.
 
 
@@ -159,12 +162,6 @@ def BuildTestCases(cls):
       # design from html5lib's, so we disable any of their tests that involve
       # <noscript>
       if '<noscript>' in test['data']:
-        continue
-
-      # <command> has been renamed to <menuitem> in recent versions of the spec.
-      # html5lib 0.95 does not include this yet, and so we disable tests that
-      # include the old tag.
-      if '<command>' in test['data']:
         continue
 
       def test_func(
