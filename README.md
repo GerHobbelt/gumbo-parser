@@ -84,6 +84,10 @@ API documentation.
 * Maintenance directions: [doc/maintaining.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/maintaining.md)
 * Test suite guide: [doc/testing.md](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/doc/testing.md)
 
+## Package availability
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/gumbo-parser.svg?columns=4)](https://repology.org/project/gumbo-parser/versions)
+
 ## A note on API/ABI compatibility
 
 We'll make a best effort to preserve API compatibility between releases.
