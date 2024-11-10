@@ -152,6 +152,7 @@ TagNames = [
   "NOBR",
   "SPACER",
   "DIALOG",
+  "SEARCH",
   "TT",
   "RTC",
 ]

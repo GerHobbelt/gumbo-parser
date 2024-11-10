@@ -2561,13 +2561,13 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
       record_end_of_element(state->_current_token, &body->v.element);
     }
     return success;
-  } else if (tag_in(token, kStartTag,
-                 (gumbo_tagset){TAG(ADDRESS), TAG(ARTICLE), TAG(ASIDE),
-                     TAG(BLOCKQUOTE), TAG(CENTER), TAG(DETAILS), TAG(DIALOG),
-                     TAG(DIR), TAG(DIV), TAG(DL), TAG(FIELDSET), TAG(FIGCAPTION),
-                     TAG(FIGURE), TAG(FOOTER), TAG(HEADER), TAG(HGROUP),
-                     TAG(MENU), TAG(MAIN), TAG(NAV), TAG(OL), TAG(P),
-                     TAG(SECTION), TAG(SUMMARY), TAG(UL)})) {
+  } else if (tag_in(token, kStartTag, (gumbo_tagset){
+        TAG(ADDRESS), TAG(ARTICLE), TAG(ASIDE), TAG(BLOCKQUOTE), TAG(CENTER),
+        TAG(DETAILS), TAG(DIALOG), TAG(DIR), TAG(DIV), TAG(DL), TAG(FIELDSET),
+        TAG(FIGCAPTION), TAG(FIGURE), TAG(FOOTER), TAG(HEADER), TAG(HGROUP),
+        TAG(MENU), TAG(MAIN), TAG(NAV), TAG(OL), TAG(P), TAG(SECTION),
+        TAG(SUMMARY), TAG(UL), TAG(SEARCH)}))
+  {
     bool result = maybe_implicitly_close_p_tag(parser, token);
     insert_element_from_token(parser, token);
     return result;
@@ -2630,13 +2630,13 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     insert_element_from_token(parser, token);
     state->_frameset_ok = false;
     return true;
-  } else if (tag_in(token, kEndTag,
-                 (gumbo_tagset){TAG(ADDRESS), TAG(ARTICLE), TAG(ASIDE),
-                     TAG(BLOCKQUOTE), TAG(BUTTON), TAG(CENTER), TAG(DETAILS),
-                     TAG(DIALOG), TAG(DIR), TAG(DIV), TAG(DL), TAG(FIELDSET),
-                     TAG(FIGCAPTION), TAG(FIGURE), TAG(FOOTER), TAG(HEADER),
-                     TAG(HGROUP), TAG(LISTING), TAG(MAIN), TAG(MENU), TAG(NAV),
-                     TAG(OL), TAG(PRE), TAG(SECTION), TAG(SUMMARY), TAG(UL)})) {
+  } else if (tag_in(token, kEndTag, (gumbo_tagset){
+        TAG(ADDRESS), TAG(ARTICLE), TAG(ASIDE), TAG(BLOCKQUOTE), TAG(BUTTON),
+        TAG(CENTER), TAG(DETAILS), TAG(DIALOG), TAG(DIR), TAG(DIV), TAG(DL),
+        TAG(FIELDSET), TAG(FIGCAPTION), TAG(FIGURE), TAG(FOOTER), TAG(HEADER),
+        TAG(HGROUP), TAG(LISTING), TAG(MAIN), TAG(MENU), TAG(NAV), TAG(OL),
+        TAG(PRE), TAG(SECTION), TAG(SUMMARY), TAG(UL), TAG(SEARCH)}))
+  {
     GumboTag tag = token->v.end_tag;
     if (!has_an_element_in_scope(parser, tag)) {
       parser_add_parse_error(parser, token);
