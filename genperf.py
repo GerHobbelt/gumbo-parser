@@ -3,14 +3,14 @@ import sys, re
 gperf_output = sys.stdin.read()
 
 hash_func = re.search(
-    "static unsigned int\s+hash\s+\((.*?)\)\s{(.*?)\n}",
+    r"static unsigned int\s+hash\s+\((.*?)\)\s{(.*?)\n}",
     gperf_output, re.DOTALL)
 
 if not hash_func:
     raise "Failed to detect hash function in GPerf output"
 
 wordlist = re.search(
-    "wordlist\[\]\s+=\s+{(.*?)}",
+    r"wordlist\[\]\s+=\s+{(.*?)}",
     gperf_output, re.DOTALL)
 
 if not wordlist:
