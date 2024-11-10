@@ -3777,40 +3777,33 @@ static bool handle_in_foreign_content(GumboParser* parser, GumboToken* token) {
       // Fall through to the if-statements below.
       break;
   }
-  // Order matters for these clauses.
-  if (tag_in(token, kStartTag,
-          (gumbo_tagset){TAG(B), TAG(BIG), TAG(BLOCKQUOTE), TAG(BODY), TAG(BR),
-              TAG(CENTER), TAG(CODE), TAG(DD), TAG(DIV), TAG(DL), TAG(DT),
-              TAG(EM), TAG(EMBED), TAG(H1), TAG(H2), TAG(H3), TAG(H4), TAG(H5),
-              TAG(H6), TAG(HEAD), TAG(HR), TAG(I), TAG(IMG), TAG(LI),
-              TAG(LISTING), TAG(MENU), TAG(META), TAG(NOBR), TAG(OL), TAG(P),
-              TAG(PRE), TAG(RUBY), TAG(S), TAG(SMALL), TAG(SPAN), TAG(STRONG),
-              TAG(STRIKE), TAG(SUB), TAG(SUP), TAG(TABLE), TAG(TT), TAG(U),
-              TAG(UL), TAG(VAR)}) ||
-      (tag_is(token, kStartTag, GUMBO_TAG_FONT) &&
-          (token_has_attribute(token, "color") ||
-              token_has_attribute(token, "face") ||
-              token_has_attribute(token, "size")))) {
+
+  if (tag_in(token, kStartTag, (gumbo_tagset){
+        TAG(B), TAG(BIG), TAG(BLOCKQUOTE), TAG(BODY), TAG(BR), TAG(CENTER),
+        TAG(CODE), TAG(DD), TAG(DIV), TAG(DL), TAG(DT), TAG(EM), TAG(EMBED),
+        TAG(H1), TAG(H2), TAG(H3), TAG(H4), TAG(H5), TAG(H6), TAG(HEAD),
+        TAG(HR), TAG(I), TAG(IMG), TAG(LI), TAG(LISTING), TAG(MENU), TAG(META),
+        TAG(NOBR), TAG(OL), TAG(P), TAG(PRE), TAG(RUBY), TAG(S), TAG(SMALL),
+        TAG(SPAN), TAG(STRONG), TAG(STRIKE), TAG(SUB), TAG(SUP), TAG(TABLE),
+        TAG(TT), TAG(U), TAG(UL), TAG(VAR)})
+      || tag_in(token, kEndTag, (gumbo_tagset){TAG(BR), TAG(P)})
+      || (tag_is(token, kStartTag, GUMBO_TAG_FONT)
+        && (token_has_attribute(token, "color")
+          || token_has_attribute(token, "face")
+          || token_has_attribute(token, "size"))))
+  {
     /* Parse error */
     parser_add_parse_error(parser, token);
 
-    /*
-     * Fragment case: If the parser was originally created for the HTML
-     * fragment parsing algorithm, then act as described in the "any other
-     * start tag" entry below.
-     */
-    if (!is_fragment_parser(parser)) {
-      do {
-        pop_current_node(parser);
-      } while (!(is_mathml_integration_point(get_current_node(parser)) ||
-                   is_html_integration_point(get_current_node(parser)) ||
-                   get_current_node(parser)->v.element.tag_namespace ==
-                       GUMBO_NAMESPACE_HTML));
-      parser->_parser_state->_reprocess_current_token = true;
-      return false;
+    while (!is_mathml_integration_point(get_current_node(parser))
+        && !is_html_integration_point(get_current_node(parser))
+        && get_current_node(parser)->v.element.tag_namespace != GUMBO_NAMESPACE_HTML)
+    {
+      pop_current_node(parser);
     }
 
-    assert(token->type == GUMBO_TOKEN_START_TAG);
+    handle_html_content(parser, token);
+    return false;
   }
 
   if (token->type == GUMBO_TOKEN_START_TAG) {
