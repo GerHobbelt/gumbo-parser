@@ -1,3 +1,16 @@
+## Gumbo 0.12.2 (2024-11-11)
+
+* Add support for `<search>` tag
+* Add special handling for `<hr>` tag in `<select>` context per [spec](https://github.com/whatwg/html/pull/9124)
+* Fix potential segfault in `gumbo_caret_diagnostic_to_string`
+* Fix pretty bad integer overflow in the numeric entity parsing code
+* Fix foreign context handling according to the [spec](https://github.com/whatwg/html/pull/6455)
+* Adjust token foreign attributes per [spec](https://html.spec.whatwg.org/multipage/parsing.html#adjust-foreign-attributes)
+* Remove special handling for `<isindex>` tag per [spec](https://github.com/whatwg/html/pull/1095)
+* Remove special handling for `<menuitem>` tag per [spec](https://github.com/whatwg/html/pull/2319)
+* Update autoconf version requirements to 2.72
+* Drop GYP build system support
+
 ## Gumbo 0.12.1 (2023-09-24)
 
 * Fix empty the end of the tag `<form>` ([#372@gumbo-parser](https://github.com/google/gumbo-parser/pull/372))
