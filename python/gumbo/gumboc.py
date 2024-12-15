@@ -54,17 +54,18 @@ _Ptr = ctypes.POINTER
 
 class EnumMetaclass(type(ctypes.c_uint)):
   def __new__(metaclass, name, bases, cls_dict):
-    cls = type(ctypes.c_uint).__new__(metaclass, name, bases, cls_dict)
-    if name == 'Enum':
-      return cls
-    try:
-      for i, value in enumerate(cls_dict['_values_']):
-        setattr(cls, value, cls.from_param(i))
-    except KeyError:
-      raise ValueError('No _values_ list found inside enum type.')
-    except TypeError:
-      raise ValueError('_values_ must be a list of names of enum constants.')
-    return cls
+    return super().__new__(metaclass, name, bases, cls_dict)
+
+  def __init__(self, name, bases, cls_dict):
+    super().__init__(name, bases, cls_dict)
+    if name != 'Enum':
+      try:
+        for i, value in enumerate(cls_dict['_values_']):
+          setattr(self, value, self.from_param(i))
+      except KeyError:
+        raise ValueError('No _values_ list found inside enum type.')
+      except TypeError:
+        raise ValueError('_values_ must be a list of names of enum constants.')
 
 def with_metaclass(mcls):
     def decorator(cls):
