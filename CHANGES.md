@@ -1,3 +1,7 @@
+## Gumbo 0.12.3 (2024-12-16)
+
+* Make Python bindings compatible with Python 3.13 (#2)
+
 ## Gumbo 0.12.2 (2024-11-11)
 
 * Add support for `<search>` tag
