@@ -562,15 +562,18 @@ static GumboNode* get_adjusted_current_node(GumboParser* parser) {
 }
 
 // Returns true if the given needle is in the given array of literal
-// GumboStringPieces.  If exact_match is true, this requires that they match
+// GumboStringPieces. If exact_match is true, this requires that they match
 // exactly; otherwise, this performs a prefix match to check if any of the
-// elements in haystack start with needle.  This always performs a
+// elements in haystack are the start of needle. This always performs a
 // case-insensitive match.
 static bool is_in_static_list(
-    const char* needle, const GumboStringPiece* haystack, bool exact_match) {
-  for (unsigned int i = 0; haystack[i].length > 0; ++i) {
-    if ((exact_match && !strcmp(needle, haystack[i].data)) ||
-        (!exact_match && !gumbo_strcasecmp(needle, haystack[i].data))) {
+  const char* needle, const GumboStringPiece* haystack, bool exact_match)
+{
+  for (size_t i = 0; haystack[i].length > 0; ++i) {
+    if (exact_match && !gumbo_strcasecmp(needle, haystack[i].data)) {
+      return true;
+    }
+    if (!exact_match && !gumbo_strncasecmp(needle, haystack[i].data, haystack[i].length)) {
       return true;
     }
   }

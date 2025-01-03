@@ -123,6 +123,27 @@ int gumbo_strcasecmp(const char* str1, const char* str2) {
 	}
 }
 
+int gumbo_strncasecmp(const char* str1, const char* str2, size_t max_len) {
+  if (!str1)
+		str1 = "";
+  if (!str2)
+		str2 = "";
+  for (; max_len > 0; max_len--) {
+    uint8_t c1 = *str1++;
+    uint8_t c2 = *str2++;
+    c1 = gumbo_tolower(c1);
+    c2 = gumbo_tolower(c2);
+    if (c1 < c2)
+		return -1;
+    if (c1 > c2)
+		return 1;
+		// c1 == c2; now see if we hit the end of the string(s):
+    if (!c1)
+		return 0;
+  }
+  return 0;
+}
+
 // Debug function to trace operation of the parser.  Pass --copts=-DGUMBO_DEBUG
 // to use.
 void gumbo_vdebug(const char* format, va_list args) {

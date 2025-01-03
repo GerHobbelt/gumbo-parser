@@ -92,6 +92,7 @@ static inline bool gumbo_isalnum(unsigned char ch)
 
 // Returns -1 if string1 is less than string2; 1 if string1 is greater than string2, and 0 if they are equal.
 int gumbo_strcasecmp(const char* string1, const char* string2);
+int gumbo_strncasecmp(const char* string1, const char* string2, size_t max_len);
 
 // translate string to positive integer
 bool gumbo_str_to_positive_integer(const char *str, int len, int *out);
