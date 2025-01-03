@@ -504,6 +504,42 @@ TEST_F(GumboParserTest, InvalidDoctype) {
   EXPECT_STREQ("Test", text->v.text.text);
 }
 
+TEST_F(GumboParserTest, DoctypePublicId) {
+  Parse("<!DOCTYPE html PUBLIC \"+//Silmaril//dtd html Pro v0r11 19970101//\">");
+  EXPECT_STREQ("+//Silmaril//dtd html Pro v0r11 19970101//", output_->document->v.document.public_identifier);
+  EXPECT_EQ(GUMBO_DOCTYPE_QUIRKS, output_->document->v.document.doc_type_quirks_mode);
+}
+
+TEST_F(GumboParserTest, DoctypePublicIdPrefix) {
+  Parse("<!DOCTYPE html PUBLIC \"+//Silmaril//dtd html Pro v0r11 19970101//foobar\">");
+  EXPECT_STREQ("+//Silmaril//dtd html Pro v0r11 19970101//foobar", output_->document->v.document.public_identifier);
+  EXPECT_EQ(GUMBO_DOCTYPE_QUIRKS, output_->document->v.document.doc_type_quirks_mode);
+}
+
+TEST_F(GumboParserTest, DoctypePublicIdHTML) {
+  Parse("<!DOCTYPE html PUBLIC \"HTML\">");
+  EXPECT_STREQ("HTML", output_->document->v.document.public_identifier);
+  EXPECT_EQ(GUMBO_DOCTYPE_QUIRKS, output_->document->v.document.doc_type_quirks_mode);
+}
+
+TEST_F(GumboParserTest, DoctypePublicIdHTMLPrefix) {
+  Parse("<!DOCTYPE html PUBLIC \"HTMLfoobar\">");
+  EXPECT_STREQ("HTMLfoobar", output_->document->v.document.public_identifier);
+  EXPECT_EQ(GUMBO_DOCTYPE_NO_QUIRKS, output_->document->v.document.doc_type_quirks_mode);
+}
+
+TEST_F(GumboParserTest, DoctypeLimitedQuirks) {
+  Parse("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//\">");
+  EXPECT_STREQ("-//W3C//DTD XHTML 1.0 Frameset//", output_->document->v.document.public_identifier);
+  EXPECT_EQ(GUMBO_DOCTYPE_LIMITED_QUIRKS, output_->document->v.document.doc_type_quirks_mode);
+}
+
+TEST_F(GumboParserTest, DoctypeLimitedQuirksPrefix) {
+  Parse("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//foobar\">");
+  EXPECT_STREQ("-//W3C//DTD XHTML 1.0 Frameset//foobar", output_->document->v.document.public_identifier);
+  EXPECT_EQ(GUMBO_DOCTYPE_LIMITED_QUIRKS, output_->document->v.document.doc_type_quirks_mode);
+}
+
 TEST_F(GumboParserTest, SingleComment) {
   Parse("<!-- comment -->");
   GumboNode* comment = GetChild(root_, 0);
