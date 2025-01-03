@@ -1,3 +1,9 @@
+## Gumbo 0.13.0 (2025-01-04)
+
+* Fix incorrect doctype matching
+* Retroactively bump so version (should have been done in 0.12.2)
+* This release is fully compatible with the current [html5lib-tests](https://github.com/html5lib/html5lib-tests)
+
 ## Gumbo 0.12.3 (2024-12-16)
 
 * Make Python bindings compatible with Python 3.13 (#2)
