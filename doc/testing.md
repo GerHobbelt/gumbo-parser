@@ -19,16 +19,6 @@ If you have gtest and its development files installed via package manager system
 wide, then you can omit `git clone` command and run `make check` straightaway
 not having directory `gtest` in project root.
 
-Note for Ubuntu users: `libgtest-dev` package only install source files.
-You have to build libraries yourself:
-
-```
-cd /usr/src/gtest
-sudo cmake CMakeLists.txt
-sudo make
-sudo cp *.a /usr/lib
-```
-
 ## html5lib-tests
 
 ```
