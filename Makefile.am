@@ -30,8 +30,7 @@ clean-local:
 endif !HAVE_SHARED_LIBGTEST
 
 gentags: src/tag.in
-	@python gentags.py $<
-	@gperf -LANSI-C --ignore-case -m200 $< |python genperf.py >src/tag_gperf.h
+	@./gentags.sh
 
 lib_LTLIBRARIES = libgumbo.la
 libgumbo_la_CFLAGS = -Wall

@@ -1,4 +1,6 @@
-static unsigned int tag_hash(register const char *str, register size_t len)
+// Do not edit! Modify src/tag.in instead. Generated via gentags.sh
+static unsigned int
+tag_hash (register const char *str, register size_t len)
 {
   static unsigned short asso_values[] =
     {
