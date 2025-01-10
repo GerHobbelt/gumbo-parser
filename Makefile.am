@@ -29,15 +29,18 @@ clean-local:
 
 endif !HAVE_SHARED_LIBGTEST
 
-if PYTHON_FOUND
-if GPERF_FOUND
-@srcdir@/src/tag_gperf.h: src/tag.in gentags.py genperf.py
-	@echo GENPERF $<
-	@python gentags.py $<
-	@echo GPERF $<
-	@gperf -LANSI-C --ignore-case -m200 $< |python genperf.py >@srcdir@/src/tag_gperf.h
-endif
-endif
+gentags: src/tag.in
+	@./gentags.sh
+
+# if PYTHON_FOUND
+# if GPERF_FOUND
+# @srcdir@/src/tag_gperf.h: src/tag.in gentags.py genperf.py
+# 	@echo GENPERF $<
+# 	@python gentags.py $<
+# 	@echo GPERF $<
+# 	@gperf -LANSI-C --ignore-case -m200 $< |python genperf.py >@srcdir@/src/tag_gperf.h
+# endif
+# endif
 
 if RAGEL_FOUND
 @srcdir@/src/char_ref.c: src/char_ref.rl
