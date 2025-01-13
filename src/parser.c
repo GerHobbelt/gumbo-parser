@@ -377,6 +377,8 @@ static void output_init(GumboParser* parser) {
 
 static void parser_state_init(GumboParser* parser) {
   GumboParserState* parser_state = gumbo_malloc(sizeof(GumboParserState));
+  if (NULL == parser_state)
+    return;
   parser_state->_insertion_mode = GUMBO_INSERTION_MODE_INITIAL;
   parser_state->_reprocess_current_token = false;
   parser_state->_frameset_ok = true;
@@ -4541,8 +4543,7 @@ static void fragment_parser_init(GumboParser* parser, GumboTag fragment_ctx,
 }
 
 GumboOutput* gumbo_parse(const char* buffer) {
-  return gumbo_parse_with_options(
-      &kGumboDefaultOptions, buffer, strlen(buffer));
+  return gumbo_parse_with_options(&kGumboDefaultOptions, buffer, strlen(buffer));
 }
 
 GumboOutput* gumbo_parse_with_options(
@@ -4554,7 +4555,7 @@ GumboOutput* gumbo_parse_with_options(
 GumboOutput* gumbo_parse_fragment(const GumboOptions* options,
     const char* buffer, size_t length, const GumboTag fragment_ctx,
     const GumboNamespaceEnum fragment_namespace) {
-  GumboParser parser;
+  GumboParser parser = {0};
   parser._options = options;
   parser_state_init(&parser);
   // Must come after parser_state_init, since creating the document node must
@@ -4564,6 +4565,8 @@ GumboOutput* gumbo_parse_fragment(const GumboOptions* options,
   // reads the first character and that may cause a UTF-8 decode error
   // (inserting into output->errors) if that's invalid.
   gumbo_tokenizer_state_init(&parser, buffer, length);
+  if (NULL == parser._parser_state)
+    return NULL;
 
   if (fragment_ctx != GUMBO_TAG_LAST) {
     fragment_parser_init(&parser, fragment_ctx, fragment_namespace);
@@ -4709,6 +4712,8 @@ GumboOutput* gumbo_parse_fragment(const GumboOptions* options,
 }
 
 void gumbo_destroy_output(GumboOutput* output) {
+  if (NULL == output)
+    return;
   free_node(output->document);
   for (unsigned int i = 0; i < output->errors.length; ++i) {
     gumbo_error_destroy(output->errors.data[i]);

@@ -136,7 +136,7 @@ static const char* find_last_newline(
   assert(error_location >= original_text);
   const char* c = error_location;
   // if the error location itself is a newline then start searching for
-  // the preceding newline one character earlier, (if possible)
+  // the preceding newline one character earlier; see original PR #371: avoid overflow segfault
   if ((*c == '\n') && (c != original_text)) --c;
   for (; c != original_text && *c != '\n'; --c) {
     // There may be an error at EOF, which would be a nul byte.
@@ -256,6 +256,8 @@ void gumbo_print_caret_diagnostic(
 }
 
 void gumbo_error_destroy(GumboError* error) {
+  if (NULL == error)
+    return;
   if (error->type == GUMBO_ERR_PARSER ||
       error->type == GUMBO_ERR_UNACKNOWLEDGED_SELF_CLOSING_TAG) {
     gumbo_vector_destroy(&error->v.parser.tag_stack);

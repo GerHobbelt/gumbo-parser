@@ -632,8 +632,7 @@ GumboOutput* gumbo_parse(const char* buffer);
  * Extended version of gumbo_parse that takes an explicit options structure,
  * buffer, and length.
  */
-GumboOutput* gumbo_parse_with_options(
-    const GumboOptions* options, const char* buffer, size_t buffer_length);
+GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* buffer, size_t buffer_length);
 
 /**
  * Parse a chunk of HTML with the given fragment context. If `fragment_ctx`
