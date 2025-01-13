@@ -36,6 +36,8 @@ GumboAttribute* gumbo_get_attribute (
 }
 
 void gumbo_destroy_attribute(GumboAttribute* attribute) {
+  if (NULL == attribute)
+    return;
   gumbo_free((void*) attribute->name);
   gumbo_free((void*) attribute->value);
   gumbo_free((void*) attribute);
