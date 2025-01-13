@@ -74,6 +74,8 @@ static inline bool gumbo_isalpha(int c)
 #if defined(GUMBO_DEBUG)
 // Debug wrapper for printf, to make it easier to turn off debugging info when
 // required.
+// Debug function to trace operation of the parser.  Pass --copts=-DGUMBO_DEBUG
+// to use.
 #include <stdio.h>
 #define gumbo_debug(...) fprintf(stderr, __VA_ARGS__)
 #else
