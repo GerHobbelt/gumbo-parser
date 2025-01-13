@@ -51,6 +51,8 @@ bool gumbo_str_to_double(const char *str, int len, double *out);
 
 // Debug wrapper for printf, to make it easier to turn off debugging info when
 // required.
+// Debug function to trace operation of the parser.  Pass --copts=-DGUMBO_DEBUG
+// to use.
 void gumbo_debug(const char* format, ...) PRINTF(1);
 
 #ifdef __cplusplus
