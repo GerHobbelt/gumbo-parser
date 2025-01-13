@@ -246,7 +246,8 @@ static const ReplacementEntry kSvgAttributeReplacements[] = {
     REPLACEMENT_ENTRY("preservealpha", "preserveAlpha"),
     REPLACEMENT_ENTRY("preserveaspectratio", "preserveAspectRatio"),
     REPLACEMENT_ENTRY("primitiveunits", "primitiveUnits"),
-    REPLACEMENT_ENTRY("refx", "refX"), REPLACEMENT_ENTRY("refy", "refY"),
+    REPLACEMENT_ENTRY("refx", "refX"),
+    REPLACEMENT_ENTRY("refy", "refY"),
     REPLACEMENT_ENTRY("repeatcount", "repeatCount"),
     REPLACEMENT_ENTRY("repeatdur", "repeatDur"),
     REPLACEMENT_ENTRY("requiredextensions", "requiredExtensions"),
@@ -499,6 +500,8 @@ static void output_init(GumboParser* parser) {
 
 static void parser_state_init(GumboParser* parser) {
   GumboParserState* parser_state = gumbo_parser_allocate(parser, sizeof(GumboParserState));
+  if (NULL == parser_state)
+    return;
   parser_state->_insertion_mode = GUMBO_INSERTION_MODE_INITIAL;
   parser_state->_reprocess_current_token = false;
   parser_state->_frameset_ok = true;
@@ -2352,9 +2355,10 @@ static bool handle_after_head(GumboParser* parser, GumboToken* token) {
 size_t gumbo_tree_traverse(GumboNode* node, void* userdata, gumbo_tree_iter_callback cb) {
   GumboNode* current_node = node;
   size_t offset = 0, retcode = 0;
-  tailcall:
 
-#define RECURSE                                                 \
+tailcall:
+
+#define RECURSE                                                  \
    do {                                                          \
      offset = current_node->index_within_parent + 1;             \
      GumboNode* next_node = current_node->parent;                \
@@ -2396,6 +2400,8 @@ size_t gumbo_tree_traverse(GumboNode* node, void* userdata, gumbo_tree_iter_call
 
 static size_t destroy_one_node(void* parser_, GumboNode* node) {
   GumboParser* parser = (GumboParser*) parser_;
+  if (NULL == node)
+    return 0;
   switch (node->type) {
     case GUMBO_NODE_DOCUMENT: {
       GumboDocument* doc = &node->v.document;
@@ -4255,16 +4261,17 @@ static void fragment_parser_init(GumboParser* parser, GumboTag fragment_ctx, Gum
 }
 
 GumboOutput* gumbo_parse(const char* buffer) {
-  return gumbo_parse_with_options(
-      &kGumboDefaultOptions, buffer, strlen(buffer));
+  return gumbo_parse_with_options(&kGumboDefaultOptions, buffer, strlen(buffer));
 }
 
 GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* buffer, size_t length) {
-  GumboParser parser;
+  GumboParser parser = {0};
   parser._options = options;
   output_init(&parser);
   gumbo_tokenizer_state_init(&parser, buffer, length);
   parser_state_init(&parser);
+  if (NULL == parser._parser_state)
+    return NULL;
 
   if (options->fragment_context != GUMBO_TAG_LAST) {
     fragment_parser_init(
@@ -4405,6 +4412,8 @@ void gumbo_destroy_node(GumboOptions* options, GumboNode* node) {
 }
 
 void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
+  if (NULL == output)
+    return;
   // Need a dummy GumboParser because the allocator comes along with the
   // options object.
   GumboParser parser;
