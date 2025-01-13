@@ -129,6 +129,8 @@ void gumbo_vdebug(const char* format, va_list args);
 
 // Debug wrapper for printf, to make it easier to turn off debugging info when
 // required.
+// Debug function to trace operation of the parser.  Pass --copts=-DGUMBO_DEBUG
+// to use.
 static inline void gumbo_debug(const char* format, ...) {
 #if defined(GUMBO_DEBUG)
   va_list args;
