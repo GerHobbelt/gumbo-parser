@@ -354,6 +354,8 @@ static void output_init(GumboParser* parser) {
 
 static void parser_state_init(GumboParser* parser) {
   GumboParserState* parser_state = gumbo_alloc(sizeof(GumboParserState));
+  if (NULL == parser_state)
+    return;
   parser_state->_insertion_mode = GUMBO_INSERTION_MODE_INITIAL;
   parser_state->_reprocess_current_token = false;
   parser_state->_frameset_ok = true;
@@ -2748,9 +2750,10 @@ static bool handle_after_head(GumboParser* parser, GumboToken* token) {
 size_t gumbo_tree_traverse(GumboNode* node, void* userdata, gumbo_tree_iter_callback cb) {
   GumboNode* current_node = node;
   size_t offset = 0, retcode = 0;
-  tailcall:
 
-#define RECURSE                                                 \
+tailcall:
+
+#define RECURSE                                                  \
    do {                                                          \
      offset = current_node->index_within_parent + 1;             \
      GumboNode* next_node = current_node->parent;                \
@@ -4759,11 +4762,7 @@ static void fragment_parser_init (
 }
 
 GumboOutput* gumbo_parse(const char* buffer) {
-  return gumbo_parse_with_options (
-    &kGumboDefaultOptions,
-    buffer,
-    strlen(buffer)
-  );
+  return gumbo_parse_with_options(&kGumboDefaultOptions, buffer, strlen(buffer));
 }
 
 GumboOutput* gumbo_parse_with_options (
@@ -4771,11 +4770,13 @@ GumboOutput* gumbo_parse_with_options (
   const char* buffer,
   size_t length
 ) {
-  GumboParser parser;
+  GumboParser parser = {0};
   parser._options = options;
   output_init(&parser);
   gumbo_tokenizer_state_init(&parser, buffer, length);
   parser_state_init(&parser);
+  if (NULL == parser._parser_state)
+    return NULL;
 
   if (options->fragment_context != NULL)
     fragment_parser_init(&parser, options);
@@ -4957,6 +4958,8 @@ void gumbo_destroy_node(GumboNode* node) {
 }
 
 void gumbo_destroy_output(GumboOutput* output) {
+  if (NULL == output)
+    return;
   destroy_node(output->document);
   for (unsigned int i = 0; i < output->errors.length; ++i) {
     gumbo_error_destroy(output->errors.data[i]);

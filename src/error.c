@@ -370,7 +370,7 @@ static const char* find_prev_newline (
   assert(error_location >= source_text);
   const char* c = error_location;
   // if the error location itself is a newline then start searching for 
-  // the preceding newline one character earlier see original PR #371
+  // the preceding newline one character earlier; see original PR #371: avoid overflow segfault
   if (*c == '\n' && c != source_text)
     --c;
   while (c != source_text && *c != '\n')
@@ -601,6 +601,8 @@ void gumbo_print_caret_diagnostic (
 }
 
 void gumbo_error_destroy(GumboError* error) {
+  if (NULL == error)
+    return;
   if (error->type == GUMBO_ERR_PARSER) {
     gumbo_vector_destroy(&error->v.parser.tag_stack);
   }

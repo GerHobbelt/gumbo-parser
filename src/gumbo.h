@@ -867,11 +867,7 @@ GumboOutput* gumbo_parse(const char* buffer);
  * Extended version of `gumbo_parse` that takes an explicit options
  * structure, buffer, and length.
  */
-GumboOutput* gumbo_parse_with_options (
-  const GumboOptions* options,
-  const char* buffer,
-  size_t buffer_length
-);
+GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* buffer, size_t buffer_length);
 
 /**
  * Compute the quirks mode based on the name, public identifier, and system
