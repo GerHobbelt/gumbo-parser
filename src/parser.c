@@ -514,7 +514,8 @@ static void output_init(GumboParser* parser) {
 
 static void parser_state_init(GumboParser* parser) {
   GumboParserState* parser_state = gumbo_parser_allocate(parser, sizeof(GumboParserState));
-  if (NULL == parser_state) return;
+  if (NULL == parser_state)
+    return;
   parser_state->_insertion_mode = GUMBO_INSERTION_MODE_INITIAL;
   parser_state->_reprocess_current_token = false;
   parser_state->_frameset_ok = true;
@@ -4125,13 +4126,11 @@ static void fragment_parser_init(GumboParser* parser, GumboTag fragment_ctx, Gum
 }
 
 GumboOutput* gumbo_parse(const char* buffer) {
-  return gumbo_parse_with_options(
-      &kGumboDefaultOptions, buffer, strlen(buffer));
+  return gumbo_parse_with_options(&kGumboDefaultOptions, buffer, strlen(buffer));
 }
 
 GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* buffer, size_t length) {
-  GumboParser parser;
-  memset(&parser, 0, sizeof parser);
+  GumboParser parser = {0};
   parser._options = options;
 
   if (SETJMP(parser._oom_buf)) {
