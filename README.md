@@ -2,6 +2,7 @@ Gumbo - A pure-C HTML5 parser.
 ============
 
 [![Build Status](https://travis-ci.org/google/gumbo-parser.svg?branch=master)](https://travis-ci.org/google/gumbo-parser) [![Build status](https://ci.appveyor.com/api/projects/status/k5xxn4bxf62ao2cp?svg=true)](https://ci.appveyor.com/project/nostrademons/gumbo-parser)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser?ref=badge_shield)
 
 Gumbo is an implementation of the [HTML5 parsing algorithm][] implemented
 as a pure C99 library with no outside dependencies.  It's designed to serve
@@ -228,3 +229,7 @@ various contributors in other repositories:
 [googletest]: https://code.google.com/p/googletest/
 [semantic versioning]: http://semver.org/
 [HTML::Gumbo]: https://metacpan.org/pod/HTML::Gumbo
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser?ref=badge_large)
