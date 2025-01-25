@@ -21,6 +21,8 @@ gumbo_src = files(
 
 libgumbo = library('gumbo', gumbo_src, soversion: '3.0.0', install: true)
 
+install_headers('src/gumbo.h', 'src/tag_enum.h')
+
 pkg = import('pkgconfig')
 pkg.generate(libgumbo, filebase: 'gumbo', name: 'Gumbo', description: 'A fully-compliant HTML5 parser.')
 
