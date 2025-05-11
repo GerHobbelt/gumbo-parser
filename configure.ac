@@ -45,3 +45,10 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 LT_INIT
 
 AC_OUTPUT
+
+AC_MSG_WARN([])
+AC_MSG_WARN([=====================================])
+AC_MSG_WARN([Autotools build system is deprecated!])
+AC_MSG_WARN([Please use Meson build system instead])
+AC_MSG_WARN([=====================================])
+AC_MSG_WARN([])
