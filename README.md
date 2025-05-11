@@ -70,10 +70,11 @@ int main(void) {
 }
 ```
 
-There are a number of sample programs in the [examples directory](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/examples).
-They're built automatically by `make`, but can also be made individually with
-`make <programname>` (eg. `make clean_text`). Also don't forget to check out
-API documentation.
+A variety of sample programs can be found in the [examples](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/examples) directory.
+To build them, enable the `examples` build option during setup, e.g.:
+```
+meson setup builddir -Dexamples=true
+```
 
 ## Learning more
 

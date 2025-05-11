@@ -48,10 +48,28 @@ if get_option('tests')
 		'gumbo_test',
 		gumbo_test_src,
 		link_with: [libgumbo],
-		include_directories: ['src/'],
+		include_directories: ['src'],
 		dependencies: [gtest_main],
 		install: false
 	)
 
 	test('gumbo_test', gumbo_test)
+endif
+
+if get_option('examples')
+	add_languages('cpp')
+
+	example_src = files(
+		'examples/clean_text.cc',
+		'examples/find_links.cc',
+		'examples/positions_of_class.cc',
+		'examples/prettyprint.cc',
+		'examples/serialize.cc',
+		'examples/get_title.c',
+	)
+
+	foreach f : example_src
+		example_name = f.full_path().split('/')[-1].split('.')[0]
+		executable(example_name, f, link_with: [libgumbo], include_directories: ['src'], c_args: ['-D_XOPEN_SOURCE=700'], install: false)
+	endforeach
 endif
