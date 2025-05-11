@@ -1,3 +1,12 @@
+## Gumbo 0.13.1 (2025-05-11)
+
+This is a maintenance release with no API/ABI changes.
+
+* Add Meson build system support (recommended build method)
+* Add deprecation warning to Autotools configure script
+
+This release is fully compatible with the current [html5lib-tests](https://github.com/html5lib/html5lib-tests) (a9f4496)
+
 ## Gumbo 0.13.0 (2025-01-04)
 
 * Fix incorrect doctype matching
