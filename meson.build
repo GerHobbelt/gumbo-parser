@@ -19,7 +19,7 @@ gumbo_src = files(
 	'src/vector.c',
 )
 
-libgumbo = library('gumbo', gumbo_src, soversion: '3.0.0', install: true)
+libgumbo = both_libraries('gumbo', gumbo_src, version: '3.0.0', install: true)
 
 install_headers('src/gumbo.h', 'src/tag_enum.h')
 
