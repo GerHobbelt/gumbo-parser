@@ -55,7 +55,7 @@ static void search_for_class(
   }
 
   GumboVector* children = &node->v.element.children;
-  for (int i = 0; i < children->length; ++i) {
+  for (unsigned int i = 0; i < children->length; ++i) {
     search_for_class(
         static_cast<GumboNode*>(children->data[i]), original_text, cls_name);
   }
