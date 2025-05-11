@@ -1,7 +1,7 @@
 project(
 	'gumbo-parser',
 	'c',
-	version: '0.13.0',
+	version: '0.13.1',
 	default_options: ['c_std=c99', 'cpp_std=c++14']
 )
 
