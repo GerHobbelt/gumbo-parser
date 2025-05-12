@@ -2,7 +2,7 @@ project(
 	'gumbo-parser',
 	'c',
 	version: '0.13.1',
-	default_options: ['c_std=c99', 'cpp_std=c++14']
+	default_options: ['c_std=c99', 'cpp_std=c++14', 'default_library=both']
 )
 
 gumbo_src = files(
@@ -19,7 +19,7 @@ gumbo_src = files(
 	'src/vector.c',
 )
 
-libgumbo = both_libraries('gumbo', gumbo_src, version: '3.0.0', install: true)
+libgumbo = library('gumbo', gumbo_src, version: '3.0.0', install: true)
 
 install_headers('src/gumbo.h', 'src/tag_enum.h')
 
