@@ -2812,7 +2812,7 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
           text_state->_start_position = token->position;
           text_state->_type = GUMBO_NODE_TEXT;
           if (prompt_attr) {
-            int prompt_attr_length = strlen(prompt_attr->value);
+            size_t prompt_attr_length = strlen(prompt_attr->value);
             gumbo_string_buffer_destroy(parser, &text_state->_buffer);
             text_state->_buffer.data =
                 gumbo_copy_stringz(parser, prompt_attr->value);
