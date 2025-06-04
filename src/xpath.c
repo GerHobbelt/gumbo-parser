@@ -271,11 +271,10 @@ void gumbo_compile_xpath(GumboParser *parser, const char *xpath, GumboVector *xp
 }
 
 XpathSegType gumbo_eval_xpath_from_root(GumboParser *parser, GumboNode *root, const char *xpath, GumboVector *output) {
-    XpathFilterType ret_type;
     GumboVector nodes = {0};
     gumbo_vector_init(parser, DEFAULT_VECTOR_SIZE, &nodes);
     gumbo_vector_add(parser, root, &nodes);
-    ret_type = gumbo_eval_xpath_from_nodes(parser, &nodes, xpath, output);
+    XpathSegType ret_type = gumbo_eval_xpath_from_nodes(parser, &nodes, xpath, output);
     gumbo_vector_destroy(parser, &nodes);
     return ret_type;
 }
@@ -436,7 +435,7 @@ static XpathSegType gumbo_do_filter(GumboParser *parser, GumboVector *src_nodes,
 }
 
 XpathSegType gumbo_eval_xpath_from_nodes(GumboParser* parser, GumboVector *doc_nodes, const char *xpath, GumboVector *output) {
-    XpathFilterType ret_type = DOC_NODE;
+    XpathSegType ret_type = DOC_NODE;
     GumboVector xpath_segs;
     GumboVector *src_nodes = output, *dst_nodes = doc_nodes, *temp;
     XpathSeg *xpath_seg;
