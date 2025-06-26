@@ -96,7 +96,9 @@ gumbo_test_DEPENDENCIES += gtest/lib/libgtest.a gtest/lib/libgtest_main.a
 gumbo_test_LDADD += gtest/lib/libgtest.a gtest/lib/libgtest_main.a
 endif
 
+if HAVE_EXAMPLES
 noinst_PROGRAMS = clean_text find_links get_title positions_of_class benchmark serialize prettyprint
+endif
 LDADD = libgumbo.la
 AM_CPPFLAGS = -I"$(srcdir)/src"
 
