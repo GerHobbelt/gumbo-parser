@@ -74,3 +74,21 @@ if get_option('examples')
 		executable(example_name, f, link_with: [libgumbo], include_directories: ['src'], c_args: ['-D_XOPEN_SOURCE=700'], install: false)
 	endforeach
 endif
+
+if get_option('fuzz')
+	add_languages('cpp', native: false)
+
+	if not meson.get_compiler('cpp').get_id().startswith('clang')
+		error('Fuzzing requires clang. Try export CC=clang CXX=clang++')
+	endif
+
+	gumbo_fuzz = executable(
+		'gumbo_fuzz',
+		files('fuzz/fuzz_target.cc'),
+		cpp_args: ['-fsanitize=fuzzer,address,undefined'],
+		link_args: ['-fsanitize=fuzzer,address,undefined'],
+		link_with: [libgumbo],
+		include_directories: ['src'],
+		install: false
+	)
+endif
