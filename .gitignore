@@ -77,6 +77,11 @@ positions_of_class
 prettyprint
 serialize
 
+gumbo_fuzz
+fuzz-*.log
+fuzz/corpus/*
+!fuzz/corpus/*.html
+
 # Tools binaries
 print
 /tmp

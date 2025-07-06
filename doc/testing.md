@@ -27,3 +27,18 @@ git submodule update --init
 ```
 python3 python/gumbo/html5lib_adapter_test.py
 ```
+
+## Fuzzing
+
+```
+export CC=clang CXX=clang++
+```
+```
+meson setup --wipe builddir --buildtype=debug -Dfuzz=true
+```
+```
+meson compile -C builddir
+```
+```
+./builddir/gumbo_fuzz -jobs=4 fuzz/corpus
+```
