@@ -1,26 +1,27 @@
-## Gumbo - A pure-C HTML5 parser
+## Gumbo - HTML parser library implemented in C99
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser?ref=badge_shield)
 
-Gumbo is an implementation of the [HTML5 parsing algorithm][] implemented
+Gumbo is an implementation of the HTML5 parsing algorithm implemented
 as a pure C99 library with no outside dependencies. It's designed to serve
 as a building block for other tools and libraries such as linters,
 validators, templating languages, and refactoring and analysis tools.
 
-This repository is a fork of [original GitHub repository][] which has been
-archived by the owner on Feb 16, 2023 and is no longer maintained.
+This repository is a fork of [original GitHub repository](https://github.com/google/gumbo-parser)
+which has been archived by the owner on Feb 16, 2023 and is no longer maintained.
 
 
 Goals & features:
 
-* Fully conformant with the [HTML5 spec][].
+* Fully conformant with the [HTML5 spec](https://html.spec.whatwg.org/multipage).
 * Robust and resilient to bad input.
 * Simple API that can be easily wrapped by other languages.
 * Support for source locations and pointers back to the original text.
 * Support for fragment parsing.
 * Relatively lightweight, with no outside dependencies.
-* Passes all [html5lib tests][], including the template tag.
+* Passes all [html5lib tests](https://github.com/html5lib/html5lib-tests).
 * Tested on over 2.5 billion pages from Google's index.
+* Follows [Semantic Versioning](https://semver.org) scheme.
 
 Non-goals:
 
@@ -38,14 +39,6 @@ Non-goals:
   representation more suited for the particular needs of your program before
   operating on it.
 
-Wishlist (aka "We couldn't get these into the original release, but are
-hoping to add them soon"):
-
-* Full-featured error reporting.
-* Additional performance improvements.
-* DOM wrapper library/libraries (possibly within other language bindings)
-* Query libraries, to extract information from parse trees using CSS or XPATH.
-
 Building gumbo - Using vcpkg
 
 You can download and install Gumbo using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
@@ -60,13 +53,13 @@ The Gumbo port in vcpkg is kept up to date by Microsoft team members and communi
 
 ## Basic usage
 
-```C
+```c
 #include <gumbo.h>
 
 int main(void) {
-    GumboOutput* output = gumbo_parse("<h1>Hello, World!</h1>");
-    // Do stuff with output->root
-    gumbo_destroy_output(&kGumboDefaultOptions, output);
+	GumboOutput* output = gumbo_parse("<h1>Hello, World!</h1>");
+	// Do stuff with output->root
+	gumbo_destroy_output(&kGumboDefaultOptions, output);
 }
 ```
 
@@ -88,29 +81,6 @@ meson setup builddir -Dexamples=true
 ## Package availability
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/gumbo-parser.svg?columns=4)](https://repology.org/project/gumbo-parser/versions)
-
-## A note on API/ABI compatibility
-
-We'll make a best effort to preserve API compatibility between releases.
-The initial release is a 0.9 (beta) release to solicit comments from early
-adopters, but if no major problems are found with the API, a 1.0 release
-will follow shortly, and the API of that should be considered stable.  If
-changes are necessary, we follow [semantic versioning][].
-
-We make no such guarantees about the ABI, and it's very likely that
-subsequent versions may require a recompile of client code.  For this
-reason, we recommend NOT using Gumbo data structures throughout a program,
-and instead limiting them to a translation layer that picks out whatever
-data is needed from the parse tree and then converts that to persistent
-data structures more appropriate for the application.  The API is
-structured to encourage this use, with a single delete function for the
-whole parse tree, and is not designed with mutation in mind.
-
-[HTML5 parsing algorithm]: http://www.whatwg.org/specs/web-apps/current-work/multipage/#auto-toc-12
-[original GitHub repository]: https://github.com/google/gumbo-parser
-[HTML5 spec]: http://www.whatwg.org/specs/web-apps/current-work/multipage/
-[html5lib tests]: https://github.com/html5lib/html5lib-tests
-[semantic versioning]: http://semver.org/
 
 A fork of the unmaintained original is available at [https://codeberg.org/gumbo-parser/gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser).
 
