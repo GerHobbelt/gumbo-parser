@@ -4,8 +4,9 @@ Gumbo is an implementation of the HTML5 parsing algorithm implemented
 as a pure C99 library with no outside dependencies. It's designed to serve
 as a building block for other tools and libraries such as linters,
 validators, templating languages, and refactoring and analysis tools.
-This repository is a fork of [original GitHub repository](https://github.com/google/gumbo-parser)
-which has been archived by the owner on Feb 16, 2023 and is no longer maintained.
+This repository adheres to all the original ideas of the archived
+[GitHub repository](https://github.com/google/gumbo-parser), which has not seen
+any development since 2016.
 
 Goals & features:
 
