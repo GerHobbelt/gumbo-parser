@@ -1,3 +1,14 @@
+## Gumbo 0.13.2 (2025-08-26)
+
+This is a maintenance release with no API/ABI changes.
+
+* Add fuzz testing facilities using LLVM's libFuzzer
+* Support Autotools builds in environments lacking a C++ compiler (#28)
+* Fix compilation with the latest gtest which now requires C++17
+* Introduce `default_library` option in Meson for more flexible builds (#12)
+
+This release is fully compatible with the current [html5lib-tests](https://github.com/html5lib/html5lib-tests) (a9f4496)
+
 ## Gumbo 0.13.1 (2025-05-11)
 
 This is a maintenance release with no API/ABI changes.

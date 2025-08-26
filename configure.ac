@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.72])
-AC_INIT([gumbo], [0.13.1], [txgk@bk.ru])
+AC_INIT([gumbo], [0.13.2], [me@txgk.in])
 AC_SUBST(gumbo_version_info, [3:0:0])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/parser.c])

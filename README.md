@@ -8,8 +8,8 @@ as a building block for other tools and libraries such as linters,
 validators, templating languages, and refactoring and analysis tools.
 
 This repository is a fork of [original GitHub repository](https://github.com/google/gumbo-parser)
-which has been archived by the owner on Feb 16, 2023 and is no longer maintained.
-
+which has been archived by the owner on Feb 16, 2023 and has not seen
+any development since 2016.
 
 Goals & features:
 

@@ -22,7 +22,7 @@ class CustomSdistCommand(sdist):
             print(e)
 
 
-README = '''Gumbo - A pure-C HTML5 parser.
+README = '''Gumbo - HTML parser library implemented in C99
 ==============================
 
 Gumbo is an implementation of the `HTML5 parsing algorithm <http://www.whatwg.org/specs/web-apps/current-work/multipage/#auto-toc-12>`_ implemented
@@ -169,16 +169,16 @@ CLASSIFIERS = [
 ]
 
 setup(name='gumbo',
-      version='0.13.1',
+      version='0.13.2',
       description='Python bindings for Gumbo HTML parser',
       long_description=README,
-      url='http://github.com/google/gumbo-parser',
-      keywords='gumbo html html5 parser google html5lib beautifulsoup',
+      url='https://codeberg.org/gumbo-parser/gumbo-parser',
+      keywords='gumbo html html5 parser html5lib beautifulsoup',
       author='Jonathan Tang',
       author_email='jonathan.d.tang@gmail.com',
       maintainer='Grigory Kirillov',
-      maintainer_email='txgk@bk.ru',
-      license='Apache 2.0',
+      maintainer_email='me@txgk.in',
+      license='Apache-2.0',
       classifiers=CLASSIFIERS,
       packages=['gumbo'],
       package_dir={'': 'python'},
