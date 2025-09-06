@@ -41,12 +41,13 @@ try:
   _dll = ctypes.cdll.LoadLibrary(os.path.join(
       os.path.dirname(__file__), '..', '..', '.libs', _name_of_lib))
 except OSError:
-  # PyPI or setuptools install, look in the current directory.
-  _dll = ctypes.cdll.LoadLibrary(os.path.join(
-      os.path.dirname(__file__), _name_of_lib))
-except OSError:
-  # System library, on unix or mac osx
-  _dll = ctypes.cdll.LoadLibrary(_name_of_lib)
+  try:
+    # PyPI or setuptools install, look in the current directory.
+    _dll = ctypes.cdll.LoadLibrary(os.path.join(
+        os.path.dirname(__file__), _name_of_lib))
+  except OSError:
+    # System library, on unix or mac osx
+    _dll = ctypes.cdll.LoadLibrary(_name_of_lib)
 
 # Some aliases for common types.
 _bitvector = ctypes.c_uint
