@@ -112,6 +112,7 @@
 "input",
 "button",
 "select",
+"selectedcontent",
 "datalist",
 "optgroup",
 "option",
