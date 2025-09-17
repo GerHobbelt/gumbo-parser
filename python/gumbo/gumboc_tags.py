@@ -113,6 +113,7 @@ TagNames = [
   "INPUT",
   "BUTTON",
   "SELECT",
+  "SELECTEDCONTENT",
   "DATALIST",
   "OPTGROUP",
   "OPTION",
