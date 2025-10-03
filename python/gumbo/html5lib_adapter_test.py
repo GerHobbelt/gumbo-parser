@@ -152,7 +152,12 @@ class Html5libAdapterTest(unittest.TestCase):
 
 
 def BuildTestCases(cls):
-  for filename in html5lib_test_files():
+  test_files = html5lib_test_files()
+
+  if(len(test_files) == 0):
+    cls.fail(cls, "Couldn't find html5lib test files, did you fetch the submodules?")
+
+  for filename in test_files:
     test_name = os.path.basename(filename).replace('.dat', '')
     for i, test in enumerate(TestData(filename)):
       # html5lib parses <noscript> tags as if the scripting-enabled flag is
