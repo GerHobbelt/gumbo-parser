@@ -30,9 +30,9 @@ class CtypesTest(unittest.TestCase):
       doctype_node = output.contents.document.contents
       self.assertEqual(gumboc.NodeType.DOCUMENT, doctype_node.type)
       document = doctype_node.v.document
-      self.assertEqual('', document.name)
-      self.assertEqual('', document.public_identifier)
-      self.assertEqual('', document.system_identifier)
+      self.assertEqual(b'', document.name)
+      self.assertEqual(b'', document.public_identifier)
+      self.assertEqual(b'', document.system_identifier)
 
       root = output.contents.root.contents
       self.assertEqual(gumboc.NodeType.ELEMENT, root.type)
@@ -43,22 +43,22 @@ class CtypesTest(unittest.TestCase):
       head = root.children[0]
       self.assertEqual(gumboc.NodeType.ELEMENT, head.type)
       self.assertEqual(gumboc.Tag.HEAD, head.tag)
-      self.assertEqual('head', head.tag_name)
+      self.assertEqual(b'head', head.tag_name)
       self.assertEqual(gumboc.Namespace.HTML, head.tag_namespace)
       self.assertEqual(0, len(head.original_tag))
       self.assertEqual('', str(head.original_end_tag))
       self.assertEqual(0, head.children.length)
 
       body = root.children[1]
-      self.assertNotEquals(body, doctype_node)
+      self.assertNotEqual(body, doctype_node)
       self.assertEqual(gumboc.NodeType.ELEMENT, body.type)
       self.assertEqual(gumboc.Tag.BODY, body.tag)
-      self.assertEqual('body', body.tag_name)
+      self.assertEqual(b'body', body.tag_name)
       self.assertEqual(1, len(body.children))
 
       text_node = body.children[0]
       self.assertEqual(gumboc.NodeType.TEXT, text_node.type)
-      self.assertEqual('Test', text_node.text)
+      self.assertEqual(b'Test', text_node.text)
 
   def testBufferThatGoesAway(self):
     for i in range(10):
@@ -74,8 +74,8 @@ class CtypesTest(unittest.TestCase):
       self.assertEqual('<foo bar=quux>', str(foo.original_tag))
       self.assertEqual('', str(foo.original_end_tag))
       self.assertEqual('foo', foo.tag_name.decode('utf-8'))
-      self.assertEqual('bar', foo.attributes[0].name)
-      self.assertEqual('quux', foo.attributes[0].value)
+      self.assertEqual(b'bar', foo.attributes[0].name)
+      self.assertEqual(b'quux', foo.attributes[0].value)
 
   def testUnknownTag(self):
     with gumboc.parse('<foo bar=quux>1<p>2</foo>') as output:
@@ -87,8 +87,8 @@ class CtypesTest(unittest.TestCase):
       self.assertEqual('<foo bar=quux>', str(foo.original_tag))
       self.assertEqual('', str(foo.original_end_tag))
       self.assertEqual('foo', foo.tag_name.decode('utf-8'))
-      self.assertEqual('bar', foo.attributes[0].name)
-      self.assertEqual('quux', foo.attributes[0].value)
+      self.assertEqual(b'bar', foo.attributes[0].name)
+      self.assertEqual(b'quux', foo.attributes[0].value)
 
   def testSarcasm(self):
     with gumboc.parse('<div><sarcasm><div></div></sarcasm></div>') as output:
