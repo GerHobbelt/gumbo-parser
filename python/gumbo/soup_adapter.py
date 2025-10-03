@@ -21,7 +21,8 @@ can then manipulate like a normal BeautifulSoup 4 parse tree.
 
 __author__ = 'jdtang@google.com (Jonathan Tang)'
 
-import bs4 as BeautifulSoup
+import bs4
+
 import gumboc
 
 
@@ -44,7 +45,7 @@ def _convert_attrs(attrs):
     # TODO(jdtang): Ideally attributes would pass along their positions as well,
     # but I can't extend the built in str objects with new attributes.  Maybe work
     # around this with a subclass in some way...
-    return [(_utf8(attr.name), _utf8(attr.value)) for attr in attrs]
+    return {_utf8(attr.name): _utf8(attr.value) for attr in attrs}
 
 
 def _add_document(soup, element):
@@ -56,8 +57,7 @@ def _add_document(soup, element):
 def _add_element(soup, element):
     # TODO(jdtang): Expose next/previous in gumbo so they can be passed along to
     # BeautifulSoup.
-    tag = BeautifulSoup.Tag(
-        name=_utf8(element.tag_name), attrs=_convert_attrs(element.attributes))
+    tag = bs4.Tag(parser = soup, name = _utf8(element.tag_name), attrs = _convert_attrs(element.attributes))
     for child in element.children:
         tag.append(_add_node(soup, child))
     _add_source_info(
@@ -77,10 +77,10 @@ def _add_text(cls):
 _HANDLERS = [
     _add_document,
     _add_element,
-    _add_text(BeautifulSoup.NavigableString),
-    _add_text(BeautifulSoup.CData),
-    _add_text(BeautifulSoup.Comment),
-    _add_text(BeautifulSoup.NavigableString),
+    _add_text(bs4.NavigableString),
+    _add_text(bs4.CData),
+    _add_text(bs4.Comment),
+    _add_text(bs4.NavigableString),
     _add_element,
     ]
 
@@ -89,32 +89,8 @@ def _add_node(soup, node):
     return _HANDLERS[node.type.value](soup, node.contents)
 
 
-def _add_next_prev_pointers(soup):
-    def _traverse(node):
-        # .findAll requires the .next pointer, which is what we're trying to add
-        # when we call this, and so we manually supply a generator to yield the
-        # nodes in DOM order.
-        yield node
-        try:
-          for child in node.contents:
-            for descendant in _traverse(child):
-                yield descendant
-        except AttributeError:
-            # Not an element.
-            return
-
-    nodes = sorted(_traverse(soup), key=lambda node: node.offset)
-    if nodes:
-        nodes[0].previous_element = None
-        nodes[-1].next_element = None
-    for i, node in enumerate(nodes[1:-1], 1):
-        nodes[i-1].next_element = node
-        node.previous_element = nodes[i-1]
-
-
 def parse(text, **kwargs):
-    with gumboc.parse(text, **kwargs) as output:
-        soup = BeautifulSoup.BeautifulSoup(features='html.parser')
-        soup.append(_add_node(soup, output.contents.root.contents))
-        _add_next_prev_pointers(soup)
-        return soup
+  with gumboc.parse(text, **kwargs) as output:
+    soup = bs4.BeautifulSoup()
+    soup.append(_add_node(soup, output.contents.root.contents))
+    return soup
