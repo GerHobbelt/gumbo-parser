@@ -1022,9 +1022,15 @@ TEST_F(GumboParserTest, ComplicatedSelect) {
   GumboNode* select = GetChild(body, 0);
   ASSERT_EQ(GUMBO_NODE_ELEMENT, select->type);
   EXPECT_EQ(GUMBO_TAG_SELECT, GetTag(select));
-  ASSERT_EQ(1, GetChildCount(select));
+  ASSERT_EQ(2, GetChildCount(select));
 
-  GumboNode* optgroup = GetChild(select, 0);
+  GumboNode* div = GetChild(select, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, div->type);
+  EXPECT_EQ(GUMBO_TAG_DIV, GetTag(div));
+  ASSERT_EQ(0, GetChildCount(div));
+  ASSERT_EQ(1, div->v.element.attributes.length);
+
+  GumboNode* optgroup = GetChild(select, 1);
   ASSERT_EQ(GUMBO_NODE_ELEMENT, optgroup->type);
   EXPECT_EQ(GUMBO_TAG_OPTGROUP, GetTag(optgroup));
   ASSERT_EQ(1, GetChildCount(optgroup));
@@ -1121,6 +1127,42 @@ TEST_F(GumboParserTest, SelectInTable) {
   ASSERT_EQ(GUMBO_NODE_ELEMENT, option->type);
   EXPECT_EQ(GUMBO_TAG_OPTION, GetTag(option));
   ASSERT_EQ(0, GetChildCount(option));
+}
+
+TEST_F(GumboParserTest, Selectedcontent) {
+  Parse("<select><button><selectedcontent></button><option>hello");
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  GumboNode* select = GetChild(body, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, select->type);
+  EXPECT_EQ(GUMBO_TAG_SELECT, GetTag(select));
+  ASSERT_EQ(2, GetChildCount(select));
+
+  GumboNode* button = GetChild(select, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, button->type);
+  EXPECT_EQ(GUMBO_TAG_BUTTON, GetTag(button));
+  ASSERT_EQ(1, GetChildCount(button));
+
+  GumboNode* selectedcontent = GetChild(button, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, selectedcontent->type);
+  EXPECT_EQ(GUMBO_TAG_SELECTEDCONTENT, GetTag(selectedcontent));
+  ASSERT_EQ(1, GetChildCount(selectedcontent));
+
+  GumboNode* text1 = GetChild(selectedcontent, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, text1->type);
+  EXPECT_STREQ("hello", text1->v.text.text);
+
+  GumboNode* option = GetChild(select, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, option->type);
+  EXPECT_EQ(GUMBO_TAG_OPTION, GetTag(option));
+  ASSERT_EQ(1, GetChildCount(option));
+
+  GumboNode* text = GetChild(option, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, text->type);
+  EXPECT_STREQ("hello", text->v.text.text);
 }
 
 TEST_F(GumboParserTest, ImplicitColgroup) {

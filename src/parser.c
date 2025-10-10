@@ -358,6 +358,8 @@ typedef struct GumboInternalParserState {
   GumboNode* _head_element;
   GumboNode* _form_element;
 
+  GumboNode* _selectedcontent_target;
+
   // The element used as fragment context when parsing in fragment mode
   GumboNode* _fragment_ctx;
 
@@ -487,6 +489,7 @@ static void parser_state_init(GumboParser* parser) {
   gumbo_vector_init(parser, 5, &parser_state->_template_insertion_modes);
   parser_state->_head_element = NULL;
   parser_state->_form_element = NULL;
+  parser_state->_selectedcontent_target = NULL;
   parser_state->_fragment_ctx = NULL;
   parser_state->_current_token = NULL;
   parser_state->_closed_body_tag = false;
@@ -913,6 +916,81 @@ static void record_end_of_element(
                                   : kGumboEmptyString;
 }
 
+static GumboNode* clone_node_recursively(GumboParser* parser, const GumboNode* src) {
+  if (!src) {
+    return NULL;
+  }
+
+  switch (src->type) {
+    case GUMBO_NODE_TEXT:
+    case GUMBO_NODE_CDATA:
+    case GUMBO_NODE_WHITESPACE:
+    case GUMBO_NODE_COMMENT: {
+      GumboNode* t = create_node(parser, src->type);
+      const char* s = src->v.text.text;
+      t->v.text.text = s ? gumbo_copy_stringz(parser, s) : NULL;
+      t->v.text.original_text.data = NULL;
+      t->v.text.original_text.length = 0;
+      t->v.text.start_pos = src->v.text.start_pos;
+      return t;
+    }
+
+    case GUMBO_NODE_ELEMENT:
+    case GUMBO_NODE_TEMPLATE: {
+      GumboNode* e = create_node(parser, src->type);
+      GumboElement* dst = &e->v.element;
+      const GumboElement* se = &src->v.element;
+
+      dst->tag = se->tag;
+      dst->tag_namespace = se->tag_namespace;
+      dst->original_tag = se->original_tag;
+      dst->original_end_tag = se->original_end_tag;
+      dst->start_pos = se->start_pos;
+      dst->end_pos = se->end_pos;
+
+      gumbo_vector_init(parser, se->attributes.length ? se->attributes.length : 1, &dst->attributes);
+      for (unsigned int i = 0; i < se->attributes.length; ++i) {
+        const GumboAttribute* sa = se->attributes.data[i];
+        GumboAttribute* a = gumbo_parser_allocate(parser, sizeof(GumboAttribute));
+        memcpy(a, sa, sizeof(*a));
+        a->name  = gumbo_copy_stringz(parser, sa->name);
+        a->value = gumbo_copy_stringz(parser, sa->value);
+        gumbo_vector_add(parser, a, &dst->attributes);
+      }
+
+      gumbo_vector_init(parser, se->children.length ? se->children.length : 1, &dst->children);
+      for (unsigned int i = 0; i < se->children.length; ++i) {
+        GumboNode* child_clone = clone_node_recursively(parser, se->children.data[i]);
+        if (child_clone) {
+          append_node(parser, e, child_clone);
+        }
+      }
+      return e;
+    }
+
+    default:
+      return NULL;
+  }
+}
+
+static void maybe_clone_option_into_selectedcontent(GumboParser* parser, GumboParserState* state, GumboNode* option_node) {
+  GumboNode* selectedcontent = state->_selectedcontent_target;
+  if (!selectedcontent) {
+    return;
+  }
+  if (option_node->type != GUMBO_NODE_ELEMENT && option_node->type != GUMBO_NODE_TEMPLATE) {
+    return;
+  }
+  GumboVector* kids = &option_node->v.element.children;
+  for (unsigned int i = 0; i < kids->length; ++i) {
+    GumboNode* child = kids->data[i];
+    GumboNode* clone = clone_node_recursively(parser, child);
+    if (clone) {
+      append_node(parser, selectedcontent, clone);
+    }
+  }
+}
+
 static GumboNode* pop_current_node(GumboParser* parser) {
   GumboParserState* state = parser->_parser_state;
   maybe_flush_text_node_buffer(parser);
@@ -940,6 +1018,10 @@ static GumboNode* pop_current_node(GumboParser* parser) {
   }
   if (!is_closed_body_or_html_tag) {
     record_end_of_element(state->_current_token, &current_node->v.element);
+
+    if (node_html_tag_is(current_node, GUMBO_TAG_OPTION)) {
+      maybe_clone_option_into_selectedcontent(parser, state, current_node);
+    }
   }
   return current_node;
 }
@@ -1246,7 +1328,7 @@ GumboNode* clone_node(
 // "Reconstruct active formatting elements" part of the spec.
 // This implementation is based on the html5lib translation from the mess of
 // GOTOs in the spec to reasonably structured programming.
-// http://code.google.com/p/html5lib/source/browse/python/html5lib/treebuilders/_base.py
+// https://github.com/html5lib/html5lib-python/blob/master/html5lib/treebuilders/base.py
 static void reconstruct_active_formatting_elements(GumboParser* parser) {
   GumboVector* elements = &parser->_parser_state->_active_formatting_elements;
   // Step 1
@@ -1542,7 +1624,7 @@ static bool is_special_node(const GumboNode* node) {
           TAG(MARQUEE), TAG(MENU), TAG(META), TAG(NAV), TAG(NOEMBED),
           TAG(NOFRAMES), TAG(NOSCRIPT), TAG(OBJECT), TAG(OL), TAG(P),
           TAG(PARAM), TAG(PLAINTEXT), TAG(PRE), TAG(SCRIPT), TAG(SECTION),
-          TAG(SELECT), TAG(STYLE), TAG(SUMMARY), TAG(TABLE), TAG(TBODY),
+          TAG(STYLE), TAG(SUMMARY), TAG(TABLE), TAG(TBODY),
           TAG(TD), TAG(TEMPLATE), TAG(TEXTAREA), TAG(TFOOT), TAG(TH),
           TAG(THEAD), TAG(TITLE), TAG(TR), TAG(UL), TAG(WBR), TAG(XMP),
 
@@ -2535,6 +2617,14 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     bool result = maybe_implicitly_close_p_tag(parser, token);
     insert_element_from_token(parser, token);
     return result;
+  } else if (tag_is(token, kStartTag, GUMBO_TAG_SELECTEDCONTENT)) {
+    GumboNode* selectedcontent = insert_element_from_token(parser, token);
+    state->_selectedcontent_target = selectedcontent;
+    return true;
+  } else if (tag_is(token, kEndTag, GUMBO_TAG_SELECTEDCONTENT)) {
+    implicitly_close_tags(parser, token, GUMBO_NAMESPACE_HTML, token->v.end_tag);
+    state->_selectedcontent_target = NULL;
+    return true;
   } else if (tag_is(token, kStartTag, GUMBO_TAG_PLAINTEXT)) {
     bool result = maybe_implicitly_close_p_tag(parser, token);
     insert_element_from_token(parser, token);
