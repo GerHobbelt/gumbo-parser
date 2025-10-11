@@ -38,6 +38,10 @@ void gumbo_vector_init(struct GumboInternalParser* parser, size_t initial_capaci
   }
 }
 
+void gumbo_vector_clear(struct GumboInternalParser* parser, GumboVector* vector) {
+  vector->length = 0;
+}
+
 void gumbo_vector_destroy(struct GumboInternalParser* parser, GumboVector* vector) {
   if (vector->capacity > 0) {
     gumbo_parser_deallocate(parser, vector->data);

@@ -1312,9 +1312,9 @@ TEST_F(GumboParserTest, Selectedcontent) {
   EXPECT_EQ(GUMBO_TAG_SELECTEDCONTENT, GetTag(selectedcontent));
   ASSERT_EQ(1, GetChildCount(selectedcontent));
 
-  GumboNode* text1 = GetChild(selectedcontent, 0);
-  ASSERT_EQ(GUMBO_NODE_TEXT, text1->type);
-  EXPECT_STREQ("hello", text1->v.text.text);
+  GumboNode* selectedtext = GetChild(selectedcontent, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, selectedtext->type);
+  EXPECT_STREQ("hello", selectedtext->v.text.text);
 
   GumboNode* option = GetChild(select, 1);
   ASSERT_EQ(GUMBO_NODE_ELEMENT, option->type);
@@ -1324,6 +1324,96 @@ TEST_F(GumboParserTest, Selectedcontent) {
   GumboNode* text = GetChild(option, 0);
   ASSERT_EQ(GUMBO_NODE_TEXT, text->type);
   EXPECT_STREQ("hello", text->v.text.text);
+}
+
+TEST_F(GumboParserTest, SelectedcontentTwoOptions) {
+  Parse("<select><button><selectedcontent></button><option>hello<option>world");
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  GumboNode* select = GetChild(body, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, select->type);
+  EXPECT_EQ(GUMBO_TAG_SELECT, GetTag(select));
+  ASSERT_EQ(3, GetChildCount(select));
+
+  GumboNode* button = GetChild(select, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, button->type);
+  EXPECT_EQ(GUMBO_TAG_BUTTON, GetTag(button));
+  ASSERT_EQ(1, GetChildCount(button));
+
+  GumboNode* selectedcontent = GetChild(button, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, selectedcontent->type);
+  EXPECT_EQ(GUMBO_TAG_SELECTEDCONTENT, GetTag(selectedcontent));
+  ASSERT_EQ(1, GetChildCount(selectedcontent));
+
+  GumboNode* selectedtext = GetChild(selectedcontent, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, selectedtext->type);
+  EXPECT_STREQ("hello", selectedtext->v.text.text);
+
+  GumboNode* option1 = GetChild(select, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, option1->type);
+  EXPECT_EQ(GUMBO_TAG_OPTION, GetTag(option1));
+  ASSERT_EQ(1, GetChildCount(option1));
+
+  GumboNode* text1 = GetChild(option1, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, text1->type);
+  EXPECT_STREQ("hello", text1->v.text.text);
+
+  GumboNode* option2 = GetChild(select, 2);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, option2->type);
+  EXPECT_EQ(GUMBO_TAG_OPTION, GetTag(option2));
+  ASSERT_EQ(1, GetChildCount(option2));
+
+  GumboNode* text2 = GetChild(option2, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, text2->type);
+  EXPECT_STREQ("world", text2->v.text.text);
+}
+
+TEST_F(GumboParserTest, SelectedcontentSelectedOption) {
+  Parse("<select><button><selectedcontent></button><option>hello<option selected>world");
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  GumboNode* select = GetChild(body, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, select->type);
+  EXPECT_EQ(GUMBO_TAG_SELECT, GetTag(select));
+  ASSERT_EQ(3, GetChildCount(select));
+
+  GumboNode* button = GetChild(select, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, button->type);
+  EXPECT_EQ(GUMBO_TAG_BUTTON, GetTag(button));
+  ASSERT_EQ(1, GetChildCount(button));
+
+  GumboNode* selectedcontent = GetChild(button, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, selectedcontent->type);
+  EXPECT_EQ(GUMBO_TAG_SELECTEDCONTENT, GetTag(selectedcontent));
+  ASSERT_EQ(1, GetChildCount(selectedcontent));
+
+  GumboNode* selectedtext = GetChild(selectedcontent, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, selectedtext->type);
+  EXPECT_STREQ("world", selectedtext->v.text.text);
+
+  GumboNode* option1 = GetChild(select, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, option1->type);
+  EXPECT_EQ(GUMBO_TAG_OPTION, GetTag(option1));
+  ASSERT_EQ(1, GetChildCount(option1));
+
+  GumboNode* text1 = GetChild(option1, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, text1->type);
+  EXPECT_STREQ("hello", text1->v.text.text);
+
+  GumboNode* option2 = GetChild(select, 2);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, option2->type);
+  EXPECT_EQ(GUMBO_TAG_OPTION, GetTag(option2));
+  ASSERT_EQ(1, GetChildCount(option2));
+
+  GumboNode* text2 = GetChild(option2, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, text2->type);
+  EXPECT_STREQ("world", text2->v.text.text);
 }
 
 TEST_F(GumboParserTest, ImplicitColgroup) {
