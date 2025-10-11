@@ -47,6 +47,12 @@ typedef char gumbo_tagset[GUMBO_TAG_LAST];
 #define TAGSET_INCLUDES(tagset, namespace, tag) \
   (tag < GUMBO_TAG_LAST && tagset[(int) tag] & (1 << (int) namespace))
 
+typedef enum {
+  GUMBO_SELECTEDCONTENT_EMPTY,
+  GUMBO_SELECTEDCONTENT_AUTOMATIC, // determined by first instance of option
+  GUMBO_SELECTEDCONTENT_FORCED,    // determined by option with selected attribute
+} GumboSelectedcontentState;
+
 // selected forward declarations as it is getting hard to find
 // an appropriate order
 static bool node_html_tag_is(const GumboNode*, GumboTag);
@@ -359,6 +365,7 @@ typedef struct GumboInternalParserState {
   GumboNode* _form_element;
 
   GumboNode* _selectedcontent_target;
+  GumboSelectedcontentState _selectedcontent_state;
 
   // The element used as fragment context when parsing in fragment mode
   GumboNode* _fragment_ctx;
@@ -490,6 +497,7 @@ static void parser_state_init(GumboParser* parser) {
   parser_state->_head_element = NULL;
   parser_state->_form_element = NULL;
   parser_state->_selectedcontent_target = NULL;
+  parser_state->_selectedcontent_state = GUMBO_SELECTEDCONTENT_EMPTY;
   parser_state->_fragment_ctx = NULL;
   parser_state->_current_token = NULL;
   parser_state->_closed_body_tag = false;
@@ -981,6 +989,20 @@ static void maybe_clone_option_into_selectedcontent(GumboParser* parser, GumboPa
   if (option_node->type != GUMBO_NODE_ELEMENT && option_node->type != GUMBO_NODE_TEMPLATE) {
     return;
   }
+  if (state->_selectedcontent_state == GUMBO_SELECTEDCONTENT_FORCED) {
+    return;
+  }
+  bool is_selected_option = !!gumbo_get_attribute(&option_node->v.element.attributes, "selected");
+  if (state->_selectedcontent_state == GUMBO_SELECTEDCONTENT_AUTOMATIC) {
+    if (!is_selected_option) {
+      return;
+    }
+    GumboVector* oldies = &selectedcontent->v.element.children;
+    for (unsigned int i = 0; i < oldies->length; ++i) {
+      destroy_node(parser, oldies->data[i]);
+    }
+    gumbo_vector_clear(parser, &selectedcontent->v.element.children);
+  }
   GumboVector* kids = &option_node->v.element.children;
   for (unsigned int i = 0; i < kids->length; ++i) {
     GumboNode* child = kids->data[i];
@@ -989,6 +1011,7 @@ static void maybe_clone_option_into_selectedcontent(GumboParser* parser, GumboPa
       append_node(parser, selectedcontent, clone);
     }
   }
+  state->_selectedcontent_state = is_selected_option ? GUMBO_SELECTEDCONTENT_FORCED : GUMBO_SELECTEDCONTENT_AUTOMATIC;
 }
 
 static GumboNode* pop_current_node(GumboParser* parser) {
@@ -2620,6 +2643,7 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
   } else if (tag_is(token, kStartTag, GUMBO_TAG_SELECTEDCONTENT)) {
     GumboNode* selectedcontent = insert_element_from_token(parser, token);
     state->_selectedcontent_target = selectedcontent;
+    state->_selectedcontent_state = GUMBO_SELECTEDCONTENT_EMPTY;
     return true;
   } else if (tag_is(token, kEndTag, GUMBO_TAG_SELECTEDCONTENT)) {
     implicitly_close_tags(parser, token, GUMBO_NAMESPACE_HTML, token->v.end_tag);
