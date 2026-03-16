@@ -1,0 +1,15 @@
+when:
+  - event: manual
+  - event: push
+    branch: master
+steps:
+  - name: alpine
+    image: alpine:latest
+    commands:
+      - apk add --no-cache
+        build-base
+        gtest-dev
+        meson
+      - meson setup build -Dexamples=true
+      - meson compile -C build
+      - meson test --interactive -C build
