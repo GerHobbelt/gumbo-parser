@@ -91,6 +91,6 @@ def _add_node(soup, node):
 
 def parse(text, **kwargs):
   with gumboc.parse(text, **kwargs) as output:
-    soup = bs4.BeautifulSoup()
+    soup = bs4.BeautifulSoup('', 'html.parser')
     soup.append(_add_node(soup, output.contents.root.contents))
     return soup
