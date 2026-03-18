@@ -40,13 +40,13 @@ class SoupAdapterTest(unittest.TestCase):
     self.assertEqual(0, len(head))
 
     body = soup.body
-    self.assertEqual(head, body.previousSibling)
+    self.assertEqual(head, body.previous_sibling)
     self.assertEqual(2, len(body))  # <ul> + trailing whitespace
     self.assertEqual(u'ul', body.contents[0].name)
     self.assertEqual(body, head.next)
     self.assertEqual(head, body.previous)
 
-    list_items = body.findAll('li')
+    list_items = body.find_all('li')
     self.assertEqual(4, len(list_items))
 
     evens = body('li', 'even')
