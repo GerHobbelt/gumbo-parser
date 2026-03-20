@@ -24,7 +24,7 @@ import warnings
 
 from html5lib import treebuilders
 
-import html5lib_adapter
+from gumbo import html5lib_adapter
 
 
 TREEBUILDER = treebuilders.getTreeBuilder('dom')

@@ -18,7 +18,7 @@ __author__ = 'jdtang@google.com (Jonathan Tang)'
 
 import unittest
 
-import soup_adapter
+from gumbo import soup_adapter
 
 
 class SoupAdapterTest(unittest.TestCase):
