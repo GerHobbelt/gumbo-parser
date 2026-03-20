@@ -23,7 +23,7 @@ __author__ = 'jdtang@google.com (Jonathan Tang)'
 
 import bs4
 
-import gumboc
+from . import gumboc
 
 
 def _utf8(text):

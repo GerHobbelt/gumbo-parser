@@ -30,16 +30,16 @@ are exported from this module.  They include:
   It will give you back a soup object like BeautifulSoup.BeautifulSoup(text).
 """
 
-from gumbo.gumboc import *
+from .gumboc import *
 
 try:
-  from gumbo import html5lib_adapter as html5lib
+  from . import html5lib_adapter as html5lib
 except ImportError:
   # html5lib not installed
   pass
 
 try:
-  from gumbo.soup_adapter import parse as soup_parse
+  from .soup_adapter import parse as soup_parse
 except ImportError:
   # BeautifulSoup not installed
   pass

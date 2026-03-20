@@ -22,13 +22,12 @@ Pythonic API.
 
 __author__ = 'jdtang@google.com (Jonathan Tang)'
 
-import sys
 import contextlib
 import ctypes
 import os.path
-import gumboc_tags
+import sys
 
-DONT_WE_LIKE_PYTHON = sys.version_info[0] == 2
+from . import gumboc_tags
 
 _name_of_lib = 'libgumbo.so'
 if sys.platform.startswith('darwin'):
@@ -117,8 +116,6 @@ class StringPiece(ctypes.Structure):
     return self.length
 
   def __str__(self):
-    if DONT_WE_LIKE_PYTHON:
-      return ctypes.string_at(self.data, self.length)
     return ctypes.string_at(self.data, self.length).decode('utf-8')
 
 
@@ -190,14 +187,8 @@ class Vector(ctypes.Structure):
     return self.length
 
   def __getitem__(self, i):
-    try:
-      # Python 2
-      numeric_types = (int, long)
-    except NameError:
-      # Python 3
-      numeric_types = int
 
-    if isinstance(i, numeric_types):
+    if isinstance(i, int):
       if i < 0:
         i += self.length
       if i > self.length:
@@ -279,14 +270,10 @@ class Element(ctypes.Structure):
     if self.tag_namespace == Namespace.SVG:
       svg_tagname = _normalize_svg_tagname(ctypes.byref(original_tag))
       if svg_tagname is not None:
-        if DONT_WE_LIKE_PYTHON:
-          return str(svg_tagname)
         return bytes(svg_tagname)
     if self.tag == Tag.UNKNOWN:
       if original_tag.data is None:
         return ''
-      if DONT_WE_LIKE_PYTHON:
-        return str(original_tag).lower()
       return str(original_tag).lower().encode('utf-8')
     return _tagname(self.tag)
 

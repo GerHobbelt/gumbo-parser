@@ -19,13 +19,22 @@ If you have gtest and its development files installed via package manager system
 wide, then you can omit `git clone` command and run `make check` straightaway
 not having directory `gtest` in project root.
 
+## Python tests
+
+```sh
+PYTHONPATH=python python3 -m gumbo.gumboc_test
+PYTHONPATH=python python3 -m gumbo.soup_adapter_test  # requires bs4
+```
+alternatively
+```sh
+python3 -m unittest discover -s python -p '*test.py'
+```
+
 ## html5lib-tests
 
-```
+```sh
 git submodule update --init
-```
-```
-python3 python/gumbo/html5lib_adapter_test.py
+PYTHONPATH=python python3 -m gumbo.html5lib_adapter_test  # requires html5lib
 ```
 
 ## Fuzzing

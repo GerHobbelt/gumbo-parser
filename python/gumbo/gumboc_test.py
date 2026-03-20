@@ -18,10 +18,9 @@
 __author__ = 'jdtang@google.com (Jonathan Tang)'
 
 import io
-
 import unittest
 
-import gumboc
+from gumbo import gumboc
 
 
 class CtypesTest(unittest.TestCase):
