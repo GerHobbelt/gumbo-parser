@@ -24,29 +24,29 @@ __author__ = 'jdtang@google.com (Jonathan Tang)'
 
 import contextlib
 import ctypes
+import ctypes.util
 import os.path
 import sys
 
 from . import gumboc_tags
 
-_name_of_lib = 'libgumbo.so'
 if sys.platform.startswith('darwin'):
   _name_of_lib = 'libgumbo.dylib'
 elif sys.platform.startswith('win'):
   _name_of_lib = "gumbo.dll"
+else:
+  _name_of_lib = 'libgumbo.so'
 
 try:
-  # First look for a freshly-built .so in the .libs directory, for development.
-  _dll = ctypes.cdll.LoadLibrary(os.path.join(
-      os.path.dirname(__file__), '..', '..', '.libs', _name_of_lib))
+  # PyPI or setuptools install, look in the current directory.
+  _dll = ctypes.CDLL(os.path.join(os.path.dirname(__file__), _name_of_lib))
 except OSError:
-  try:
-    # PyPI or setuptools install, look in the current directory.
-    _dll = ctypes.cdll.LoadLibrary(os.path.join(
-        os.path.dirname(__file__), _name_of_lib))
-  except OSError:
-    # System library, on unix or mac osx
-    _dll = ctypes.cdll.LoadLibrary(_name_of_lib)
+  # System library, try the finder
+  name = ctypes.util.find_library('gumbo')
+  if not name:
+    raise OSError("Failed to find gumbo shared library.")
+  _dll = ctypes.CDLL(name)
+
 
 # Some aliases for common types.
 _bitvector = ctypes.c_uint
