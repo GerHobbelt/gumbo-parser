@@ -25,10 +25,9 @@ __author__ = 'jdtang@google.com (Jonathan Tang)'
 import contextlib
 import ctypes
 import ctypes.util
+import itertools
 import os.path
 import sys
-
-from . import gumboc_tags
 
 if sys.platform.startswith('darwin'):
   _name_of_lib = 'libgumbo.dylib'
@@ -243,13 +242,25 @@ class Namespace(Enum):
     return self.URLS[self.value]
 
 
+_gumbo_normalized_tagname = _dll['gumbo_normalized_tagname']
+_gumbo_normalized_tagname.argtypes = [ctypes.c_uint]
+_gumbo_normalized_tagname.restype = ctypes.c_char_p
+_tagnames = []
+for i in itertools.count():
+  tagname = _gumbo_normalized_tagname(i)
+  if tagname:
+    _tagnames.append(tagname.decode().upper().replace('-', '_'))
+  else:
+    break
+del tagname, _gumbo_normalized_tagname
+
 class Tag(Enum):
   @staticmethod
   def from_str(tagname):
     text_ptr = ctypes.c_char_p(tagname.encode('utf-8'))
     return _tag_enum(text_ptr)
 
-  _values_ = gumboc_tags.TagNames + ['UNKNOWN', 'LAST']
+  _values_ = _tagnames + ['UNKNOWN', 'LAST']
 
 class Element(ctypes.Structure):
   _fields_ = [
