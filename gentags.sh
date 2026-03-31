@@ -10,16 +10,12 @@ perf_file='src/tag_gperf.h'
 strs_file='src/tag_strings.h'
 enum_file='src/tag_enum.h'
 size_file='src/tag_sizes.h'
-tags_file='python/gumbo/gumboc_tags.py'
 
 comment="Do not edit! Modify $data_file instead. Generated via gentags.sh"
 
 echo "// $comment" > "$strs_file"
 echo "// $comment" > "$enum_file"
 echo "// $comment" > "$size_file"
-echo "## $comment" > "$tags_file"
-
-echo 'TagNames = [' >> "$tags_file"
 
 while read -r tag; do
 	tag_upper="$(echo "$tag" | tr '[:lower:]' '[:upper:]' | tr '-' '_')"
@@ -27,10 +23,7 @@ while read -r tag; do
 	printf '"%s",\n'         "$tag"       >> "$strs_file"
 	printf 'GUMBO_TAG_%s,\n' "$tag_upper" >> "$enum_file"
 	printf '%d, '            "${#tag}"    >> "$size_file"
-	printf '  "%s",\n'       "$tag_upper" >> "$tags_file"
 done < "$data_file"
-
-echo ']' >> "$tags_file"
 
 gperf -LANSI-C --ignore-case -m200 --hash-function-name=tag_hash "$data_file" > "$perf_file"
 
