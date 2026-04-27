@@ -42,11 +42,11 @@ gentags: src/tag.in
 # endif
 # endif
 
-if RAGEL_FOUND
-@srcdir@/src/char_ref.c: src/char_ref.rl
-	@echo RAGEL src/char_ref.rl
-	@cd @srcdir@/src && ragel -F0 char_ref.rl > char_ref.c
-endif
+# if RAGEL_FOUND
+# @srcdir@/src/char_ref.c: src/char_ref.rl
+# 	@echo RAGEL src/char_ref.rl
+# 	@cd @srcdir@/src && ragel -F0 char_ref.rl > char_ref.c
+# endif
 
 lib_LTLIBRARIES = libgumbo.la
 libgumbo_la_CFLAGS = -Wall

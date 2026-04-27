@@ -14,6 +14,7 @@ summary({
 gumbo_src = files(
 	'src/attribute.c',
 	'src/char_ref.c',
+	'src/char_ref_gperf.c',
 	'src/error.c',
 	'src/parser.c',
 	'src/string_buffer.c',
