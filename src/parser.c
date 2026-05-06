@@ -2932,6 +2932,12 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     set_frameset_not_ok(parser);
     return success;
   } else if (tag_is(token, kStartTag, GUMBO_TAG_INPUT)) {
+    if (is_fragment_parser(parser) &&
+        node_html_tag_is(state->_fragment_ctx, GUMBO_TAG_SELECT)) {
+      parser_add_parse_error(parser, token);
+      ignore_token(parser);
+      return false;
+    }
     if (has_an_element_in_scope(parser, GUMBO_TAG_SELECT)) {
       parser_add_parse_error(parser, token);
       while (!node_html_tag_is(pop_current_node(parser), GUMBO_TAG_SELECT));
