@@ -201,7 +201,7 @@ static const char* find_named_ref(
 
   while (p < end && (size_t) (p - start) < GUMBO_NAMED_CHAR_REF_MAX_LEN) {
     const unsigned char c = (unsigned char) *p;
-    if (!isalnum(c) && c != ';') {
+    if (!gumbo_isalnum(c) && c != ';') {
       break;
     }
 
@@ -253,7 +253,7 @@ static bool consume_named_ref(
     return true;
   } else if (is_in_attribute &&
              match_end < end &&
-             (*match_end == '=' || isalnum((unsigned char) *match_end))) {
+             (*match_end == '=' || gumbo_isalnum((unsigned char) *match_end))) {
     output->first = kGumboNoChar;
     output->second = kGumboNoChar;
     utf8iterator_reset(input);
@@ -299,4 +299,3 @@ bool consume_char_ref(struct GumboInternalParser* parser,
       return consume_named_ref(parser, input, is_in_attribute, output);
   }
 }
-    } else if (is_in_attribute && (*te == '=' || isalnum(*te))) {
