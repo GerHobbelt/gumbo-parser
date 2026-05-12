@@ -198,7 +198,10 @@ void InitLeakDetection(GumboOptions* options, MallocStats* stats) {
 }
 
 GumboTest::GumboTest()
-    : options_(kGumboDefaultOptions), errors_are_expected_(false), text_("") {
+    : options_(kGumboDefaultOptions),
+	  malloc_stats_{0},
+	  parser_{0}, 
+      errors_are_expected_(false), text_("") {
   InitLeakDetection(&options_, &malloc_stats_);
   options_.max_errors = 100;
   parser_._options = &options_;

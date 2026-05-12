@@ -40,8 +40,8 @@ TEST_F(GumboAttributeTest, GetAttribute) {
   attr1.name = "";
   attr2.name = "foo";
 
-  gumbo_vector_add(&parser_, &attr1, &vector_);
-  gumbo_vector_add(&parser_, &attr2, &vector_);
+  EXPECT_FALSE(gumbo_vector_add(&parser_, &attr1, &vector_));
+  EXPECT_FALSE(gumbo_vector_add(&parser_, &attr2, &vector_));
   EXPECT_EQ(&attr2, gumbo_get_attribute(&vector_, "foo"));
   EXPECT_EQ(NULL, gumbo_get_attribute(&vector_, "bar"));
 }

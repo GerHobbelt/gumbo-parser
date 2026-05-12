@@ -691,7 +691,7 @@ static GumboError* parser_add_parse_error(GumboParser* parser, const GumboToken*
     const GumboNode* node = state->_open_elements.data[i];
     assert(
         node->type == GUMBO_NODE_ELEMENT || node->type == GUMBO_NODE_TEMPLATE);
-    gumbo_vector_add(parser, (void*)(intptr_t) node->v.element.tag, &extra_data->tag_stack);
+    (void)gumbo_vector_add(parser, (void*)(intptr_t) node->v.element.tag, &extra_data->tag_stack);
   }
   return error;
 }
@@ -746,8 +746,8 @@ static bool node_html_tag_is(const GumboNode* node, GumboTag tag) {
   return node_qualified_tag_is(node, GUMBO_NAMESPACE_HTML, tag);
 }
 
-static void push_template_insertion_mode(GumboParser* parser, GumboInsertionMode mode) {
-  gumbo_vector_add(
+static bool push_template_insertion_mode(GumboParser* parser, GumboInsertionMode mode) [[nodiscard]] {
+  return gumbo_vector_add(
       parser, (void*)(intptr_t) mode, &parser->_parser_state->_template_insertion_modes);
 }
 
@@ -843,7 +843,7 @@ InsertionLocation get_appropriate_insertion_location(GumboParser* parser, GumboN
 
 // Appends a node to the end of its parent, setting the "parent" and
 // "index_within_parent" fields appropriately.
-static void append_node(GumboParser* parser, GumboNode* parent, GumboNode* node) {
+static bool append_node(GumboParser* parser, GumboNode* parent, GumboNode* node) [[nodiscard]] {
   assert(node->parent == NULL);
   assert(node->index_within_parent == -1);
   GumboVector* children;
@@ -856,8 +856,12 @@ static void append_node(GumboParser* parser, GumboNode* parent, GumboNode* node)
   }
   node->parent = parent;
   node->index_within_parent = children->length;
-  gumbo_vector_add(parser, (void*) node, children);
+  if (gumbo_vector_add(parser, (void*) node, children)) {
+    node->index_within_parent = -1;
+    return true;
+  }
   assert(node->index_within_parent < children->length);
+  return false;
 }
 
 // Inserts a node at the specified InsertionLocation, updating the
