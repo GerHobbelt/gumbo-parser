@@ -38,7 +38,7 @@ void gumbo_vector_clear(
 void gumbo_vector_destroy(struct GumboInternalParser* parser, GumboVector* vector);
 
 // Adds a new element to an GumboVector.
-void gumbo_vector_add(struct GumboInternalParser* parser, void* element, GumboVector* vector);
+[[nodiscard]] bool gumbo_vector_add(struct GumboInternalParser* parser, void* element, GumboVector* vector);
 
 // Removes and returns the element most recently added to the GumboVector.
 // Ownership is transferred to caller.  Capacity is unchanged.  If the vector is
@@ -53,7 +53,7 @@ int gumbo_vector_size(struct GumboInternalParser* parser, GumboVector* vector);
 
 // Inserts an element at a specific index.  This is potentially O(N) time, but
 // is necessary for some of the spec's behavior.
-void gumbo_vector_insert_at(struct GumboInternalParser* parser, void* element, unsigned int index, GumboVector* vector);
+[[nodiscard]] bool gumbo_vector_insert_at(struct GumboInternalParser* parser, void* element, unsigned int index, GumboVector* vector);
 
 // Removes an element from the vector, or does nothing if the element is not in
 // the vector.

@@ -499,9 +499,11 @@ static GumboNode* new_document_node(GumboParser* parser) {
 
 static void output_init(GumboParser* parser) {
   GumboOutput* output = gumbo_parser_allocate(parser, sizeof(GumboOutput));
-  output->root = NULL;
-  output->document = new_document_node(parser);
-  output->status = GUMBO_STATUS_OK;
+  if (output != NULL) {
+    output->root = NULL;
+    output->document = new_document_node(parser);
+    output->status = GUMBO_STATUS_OK;
+  }
   parser->_output = output;
   gumbo_init_errors(parser);
 }
@@ -4049,8 +4051,10 @@ GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* b
   output_init(&parser);
   gumbo_tokenizer_state_init(&parser, buffer, length);
   parser_state_init(&parser);
-  if (NULL == parser._parser_state)
+  if (NULL == parser._parser_state || NULL == parser._output) {
+    gumbo_debug("Failed to initialize the parser.\n");
     return NULL;
+  }
 
   if (options->fragment_context != GUMBO_TAG_LAST) {
     fragment_parser_init(
@@ -4185,7 +4189,7 @@ const char* gumbo_status_to_string(GumboOutputStatus status) {
 void gumbo_destroy_node(GumboOptions* options, GumboNode* node) {
   // Need a dummy GumboParser because the allocator comes along with the
   // options object.
-  GumboParser parser;
+  GumboParser parser = {0};
   parser._options = options;
   destroy_node(&parser, node);
 }
@@ -4195,7 +4199,7 @@ void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
     return;
   // Need a dummy GumboParser because the allocator comes along with the
   // options object.
-  GumboParser parser;
+  GumboParser parser = {0};
   parser._options = options;
   destroy_node(&parser, output->document);
   for (unsigned int i = 0; i < output->errors.length; ++i) {

@@ -833,6 +833,7 @@ void gumbo_tokenizer_state_init(
   GumboTokenizerState* tokenizer = gumbo_parser_allocate(parser, sizeof(GumboTokenizerState));
   parser->_tokenizer_state = tokenizer;
   gumbo_tokenizer_set_state(parser, GUMBO_LEX_DATA);
+  assert(tokenizer != NULL);
   tokenizer->_reconsume_current_input = false;
   tokenizer->_is_current_node_foreign = false;
   tokenizer->_is_in_cdata = false;

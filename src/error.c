@@ -292,8 +292,10 @@ void gumbo_error_destroy(GumboParser* parser, GumboError* error) {
 }
 
 void gumbo_init_errors(GumboParser* parser) {
-  gumbo_vector_init(parser, 5, &parser->_output->errors);
-  parser->_output->error_messages = NULL;
+  if (parser->_output != NULL) {
+    gumbo_vector_init(parser, 5, &parser->_output->errors);
+    parser->_output->error_messages = NULL;
+  }
 }
 
 void gumbo_destroy_errors(GumboParser* parser) {
