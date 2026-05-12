@@ -230,6 +230,8 @@ various contributors in other repositories:
 [semantic versioning]: http://semver.org/
 [HTML::Gumbo]: https://metacpan.org/pod/HTML::Gumbo
 
+A fork of the unmaintained original is available at [https://codeberg.org/gumbo-parser/gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser).
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffxnoob%2Fgumbo-parser?ref=badge_large)
+
