@@ -47,8 +47,11 @@ class BasicTests(TestCase):
             self.assertFalse(t.docinfo.doctype)
 
     def test_check_bom(self):
-        for bom in BOMS:
+        for bom, enc in BOMS.items():
             self.assertIs(bom, check_bom(bom + b'xxx'))
+            data = bom + '<p>hello</p>'.encode(enc)
+            root = parse(data)
+            self.ae(root[1][0].tag, 'p')
 
     def test_meta_charset(self):
         def t(html, expected):
