@@ -17,6 +17,7 @@
 #include "util.h"
 
 #include <assert.h>
+#include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
 #include "string_util.h"
@@ -33,7 +34,19 @@
 const GumboSourcePosition kGumboEmptySourcePosition = {0, 0, 0};
 
 void* gumbo_parser_allocate(GumboParser* parser, size_t num_bytes) {
-  return parser->_options->allocator(parser->_options->userdata, num_bytes);
+  assert(num_bytes > 0);
+  assert(parser->_options != NULL);
+  void* v = parser->_options->allocator(parser->_options->userdata, num_bytes);
+  if (NULL == v) {
+#ifndef _WIN32
+    siglongjmp(parser->_oom_buf, 1);
+#else
+    longjmp(parser->_oom_buf, 1);
+#endif
+  } else {
+    memset(v, '\0', num_bytes);
+  }
+  return v;
 }
 
 void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
@@ -41,7 +54,17 @@ void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
 }
 
 void* gumbo_parser_reallocate(struct GumboInternalParser* parser, void* ptr, size_t new_num_bytes, size_t old_num_bytes) {
-  return parser->_options->reallocator(parser->_options->userdata, ptr, new_num_bytes, old_num_bytes);
+  uint8_t* v = (uint8_t *)parser->_options->reallocator(parser->_options->userdata, ptr, new_num_bytes, old_num_bytes);
+  if (NULL == v) {
+#ifndef _WIN32
+    siglongjmp(parser->_oom_buf, 1);
+#else
+    longjmp(parser->_oom_buf, 1);
+#endif
+  } else if (old_num_bytes < new_num_bytes) {
+    memset(v + old_num_bytes, '\0', new_num_bytes - old_num_bytes);
+  }
+  return v;
 }
 
 bool gumbo_str_to_positive_integer(const char *str, int len, int *out) {

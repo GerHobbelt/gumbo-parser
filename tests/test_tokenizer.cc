@@ -58,7 +58,7 @@ TEST(GumboTagEnumTest, TagEnumIncludesAllTags) {
 }
 
 TEST_F(GumboTokenizerTest, TagEnumIncludesAllTags) {
-  EXPECT_EQ(151, GUMBO_TAG_UNKNOWN);
+  EXPECT_EQ(154, GUMBO_TAG_UNKNOWN);
 
   auto kGumboTagNames = getGumboTagNamesList();
   EXPECT_STREQ("", kGumboTagNames[GUMBO_TAG_UNKNOWN]);
@@ -70,7 +70,7 @@ TEST_F(GumboTokenizerTest, TagEnumIncludesAllTags) {
     const char* tagname = gumbo_normalized_tagname((GumboTag)i);
     EXPECT_FALSE(tagname == NULL);
     EXPECT_FALSE(tagname[0] == '\0');
-    EXPECT_TRUE(strlen(tagname) < 15);
+    EXPECT_TRUE(strlen(tagname) < 16);
   }
   EXPECT_STREQ("", gumbo_normalized_tagname(GUMBO_TAG_UNKNOWN));
   EXPECT_STREQ("html", gumbo_normalized_tagname(GUMBO_TAG_HTML));

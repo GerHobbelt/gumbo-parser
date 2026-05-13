@@ -860,6 +860,7 @@ void gumbo_tokenizer_state_destroy(GumboParser* parser) {
   gumbo_string_buffer_destroy(parser, &tokenizer->_temporary_buffer);
   gumbo_string_buffer_destroy(parser, &tokenizer->_script_data_buffer);
   gumbo_parser_deallocate(parser, tokenizer);
+  parser->_tokenizer_state = NULL;
 }
 
 void gumbo_tokenizer_set_state(GumboParser* parser, GumboTokenizerEnum state) {

@@ -39,12 +39,14 @@ static void maybe_resize_string_buffer(struct GumboInternalParser* parser,
   }
   if (new_capacity != buffer->capacity) {
     buffer->data = gumbo_parser_reallocate(parser, buffer->data, new_capacity, buffer->length);
+    assert(buffer->data != NULL);
     buffer->capacity = new_capacity;
   }
 }
 
 void gumbo_string_buffer_init(struct GumboInternalParser* parser, GumboStringBuffer* output) {
   output->data = gumbo_parser_allocate(parser, kDefaultStringBufferSize);
+  assert(output->data != NULL);
   output->length = 0;
   output->capacity = kDefaultStringBufferSize;
 }
@@ -115,4 +117,5 @@ void gumbo_string_buffer_clear(struct GumboInternalParser* parser, GumboStringBu
 
 void gumbo_string_buffer_destroy(struct GumboInternalParser* parser, GumboStringBuffer* buffer) {
   gumbo_parser_deallocate(parser, buffer->data);
+  buffer->data = NULL;
 }

@@ -48,15 +48,14 @@ void gumbo_vector_destroy(struct GumboInternalParser* parser, GumboVector* vecto
   }
 }
 
-static bool enlarge_vector_if_full(struct GumboInternalParser* parser, GumboVector* vector) [[nodiscard]] {
+static void enlarge_vector_if_full(struct GumboInternalParser* parser, GumboVector* vector) {
   if (vector->length >= vector->capacity) {
     if (vector->capacity) {
       size_t old_num_bytes = sizeof(void*) * vector->capacity;
       vector->capacity *= 2;
       size_t num_bytes = sizeof(void*) * vector->capacity;
       void** temp = gumbo_parser_allocate(parser, num_bytes);
-      if (temp == NULL)
-		return true;
+      assert(temp != NULL);
       memcpy(temp, vector->data, old_num_bytes);
       gumbo_parser_deallocate(parser, vector->data);
       vector->data = temp;
@@ -65,20 +64,16 @@ static bool enlarge_vector_if_full(struct GumboInternalParser* parser, GumboVect
       vector->capacity = 2;
       vector->data =
           gumbo_parser_allocate(parser, sizeof(void*) * vector->capacity);
-      if (vector->data == NULL)
-		  return true;
+      assert(vector->data != NULL);
     }
   }
-  return false;
 }
 
-bool gumbo_vector_add(struct GumboInternalParser* parser, void* element, GumboVector* vector) {
-  if (enlarge_vector_if_full(parser, vector))
-	  return true;
+void gumbo_vector_add(struct GumboInternalParser* parser, void* element, GumboVector* vector) {
+  enlarge_vector_if_full(parser, vector);
   assert(vector->data != NULL);
   assert(vector->length < vector->capacity);
   vector->data[vector->length++] = element;
-  return false;
 }
 
 void* gumbo_vector_pop(struct GumboInternalParser* parser, GumboVector* vector) {
@@ -109,16 +104,14 @@ int gumbo_vector_index_of(GumboVector* vector, const void* element) {
   return -1;
 }
 
-bool gumbo_vector_insert_at(struct GumboInternalParser* parser, void* element, unsigned int index, GumboVector* vector) {
+void gumbo_vector_insert_at(struct GumboInternalParser* parser, void* element, unsigned int index, GumboVector* vector) {
   assert(index >= 0);
   assert(index <= vector->length);
-  if (enlarge_vector_if_full(parser, vector))
-	  return true;
+  enlarge_vector_if_full(parser, vector);
   ++vector->length;
   memmove(&vector->data[index + 1], &vector->data[index],
       sizeof(void*) * (vector->length - index - 1));
   vector->data[index] = element;
-  return false;
 }
 
 void gumbo_vector_remove(struct GumboInternalParser* parser, void* node, GumboVector* vector) {

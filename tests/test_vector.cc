@@ -73,13 +73,13 @@ TEST_F(GumboVectorTest, InitZeroCapacity) {
   gumbo_vector_destroy(&parser_, &vector_);
   gumbo_vector_init(&parser_, 0, &vector_);
 
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
   EXPECT_EQ(1, vector_.length);
   EXPECT_EQ(1, *(static_cast<int*>(vector_.data[0])));
 }
 
 TEST_F(GumboVectorTest, Add) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
   EXPECT_EQ(1, vector_.length);
   EXPECT_EQ(1, *(static_cast<int*>(vector_.data[0])));
   EXPECT_EQ(0, gumbo_vector_index_of(&vector_, &one_));
@@ -87,24 +87,24 @@ TEST_F(GumboVectorTest, Add) {
 }
 
 TEST_F(GumboVectorTest, AddMultiple) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &two_, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
+  gumbo_vector_add(&parser_, &two_, &vector_);
   EXPECT_EQ(2, vector_.length);
   EXPECT_EQ(2, *(static_cast<int*>(vector_.data[1])));
   EXPECT_EQ(1, gumbo_vector_index_of(&vector_, &two_));
 }
 
 TEST_F(GumboVectorTest, Realloc) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &two_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &three_, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
+  gumbo_vector_add(&parser_, &two_, &vector_);
+  gumbo_vector_add(&parser_, &three_, &vector_);
   EXPECT_EQ(3, vector_.length);
   EXPECT_EQ(4, vector_.capacity);
   EXPECT_EQ(3, *(static_cast<int*>(vector_.data[2])));
 }
 
 TEST_F(GumboVectorTest, Pop) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
   int result = *static_cast<int*>(gumbo_vector_pop(&parser_, &vector_));
   EXPECT_EQ(1, result);
   EXPECT_EQ(0, vector_.length);
@@ -115,27 +115,27 @@ TEST_F(GumboVectorTest, PopEmpty) {
 }
 
 TEST_F(GumboVectorTest, InsertAtFirst) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &two_, &vector_));
-  EXPECT_FALSE(gumbo_vector_insert_at(&parser_, &three_, 0, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
+  gumbo_vector_add(&parser_, &two_, &vector_);
+  gumbo_vector_insert_at(&parser_, &three_, 0, &vector_);
   EXPECT_EQ(3, vector_.length);
   int result = *static_cast<int*>(vector_.data[0]);
   EXPECT_EQ(3, result);
 }
 
 TEST_F(GumboVectorTest, InsertAtLast) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &two_, &vector_));
-  EXPECT_FALSE(gumbo_vector_insert_at(&parser_, &three_, 2, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
+  gumbo_vector_add(&parser_, &two_, &vector_);
+  gumbo_vector_insert_at(&parser_, &three_, 2, &vector_);
   EXPECT_EQ(3, vector_.length);
   int result = *static_cast<int*>(vector_.data[2]);
   EXPECT_EQ(3, result);
 }
 
 TEST_F(GumboVectorTest, Remove) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &two_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &three_, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
+  gumbo_vector_add(&parser_, &two_, &vector_);
+  gumbo_vector_add(&parser_, &three_, &vector_);
   gumbo_vector_remove(&parser_, &two_, &vector_);
   EXPECT_EQ(2, vector_.length);
   int three = *static_cast<int*>(vector_.data[1]);
@@ -143,9 +143,9 @@ TEST_F(GumboVectorTest, Remove) {
 }
 
 TEST_F(GumboVectorTest, RemoveAt) {
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &one_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &two_, &vector_));
-  EXPECT_FALSE(gumbo_vector_add(&parser_, &three_, &vector_));
+  gumbo_vector_add(&parser_, &one_, &vector_);
+  gumbo_vector_add(&parser_, &two_, &vector_);
+  gumbo_vector_add(&parser_, &three_, &vector_);
   int result =
       *static_cast<int*>(gumbo_vector_remove_at(&parser_, 1, &vector_));
   EXPECT_EQ(2, result);

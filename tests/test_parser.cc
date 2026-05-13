@@ -2309,6 +2309,16 @@ TEST_F(GumboParserTest, OutOfMemory) {
       return (void*) nullptr;
     }
   };
+  options.reallocator = [](void* userdata, void* ptr, size_t new_num_bytes, size_t old_num_bytes) {
+    auto count = (Count*) userdata;
+    if (count->count) {
+      count->count--;
+      return realloc(ptr, new_num_bytes);
+    } else {
+      count->count = ++count->count_max;
+      return (void*) nullptr;
+    }
+  };
 
   const char buf[] = "<html><head><title>dummy</title></head><body>some text</body></html>";
   GumboOutput *output;

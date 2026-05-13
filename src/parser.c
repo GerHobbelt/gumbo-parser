@@ -15,6 +15,7 @@
 // Author: jdtang@google.com (Jonathan Tang)
 
 #include <assert.h>
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,12 +38,18 @@
 #include "util.h"
 #include "vector.h"
 
-#define AVOID_UNUSED_VARIABLE_WARNING(i) (void)(i)
+#define AVOID_UNUSED_VARIABLE_WARNING(i) (void) (i)
 
 #define GUMBO_STRING(literal) \
   { literal, sizeof(literal) - 1 }
 #define TERMINATOR \
   { "", 0 }
+
+#ifdef _WIN32
+#define SETJMP(x) (setjmp(x))
+#else
+#define SETJMP(x) (sigsetjmp(x, 0))
+#endif
 
 typedef char gumbo_tagset[GUMBO_TAG_LAST];
 #define TAG(tag) [GUMBO_TAG_##tag] = (1 << GUMBO_NAMESPACE_HTML)
@@ -433,6 +440,13 @@ typedef struct GumboInternalParserState {
   // flag appropriately.
   bool _closed_body_tag;
   bool _closed_html_tag;
+
+  // Jump buf to jump to on memory exhaustion.
+#ifdef _WIN32
+  jmp_buf oom_buf;
+#else
+  sigjmp_buf oom_buf;
+#endif
 } GumboParserState;
 
 static bool token_has_attribute(const GumboToken* token, const char* name) {
@@ -499,11 +513,9 @@ static GumboNode* new_document_node(GumboParser* parser) {
 
 static void output_init(GumboParser* parser) {
   GumboOutput* output = gumbo_parser_allocate(parser, sizeof(GumboOutput));
-  if (output != NULL) {
-    output->root = NULL;
-    output->document = new_document_node(parser);
-    output->status = GUMBO_STATUS_OK;
-  }
+  output->root = NULL;
+  output->document = new_document_node(parser);
+  output->status = GUMBO_STATUS_OK;
   parser->_output = output;
   gumbo_init_errors(parser);
 }
@@ -543,6 +555,7 @@ static void parser_state_destroy(GumboParser* parser) {
   gumbo_vector_destroy(parser, &state->_template_insertion_modes);
   gumbo_string_buffer_destroy(parser, &state->_text_node._buffer);
   gumbo_parser_deallocate(parser, state);
+  parser->_parser_state = NULL;
 }
 
 static GumboNode* get_document_node(GumboParser* parser) {
@@ -691,7 +704,7 @@ static GumboError* parser_add_parse_error(GumboParser* parser, const GumboToken*
     const GumboNode* node = state->_open_elements.data[i];
     assert(
         node->type == GUMBO_NODE_ELEMENT || node->type == GUMBO_NODE_TEMPLATE);
-    (void)gumbo_vector_add(parser, (void*)(intptr_t) node->v.element.tag, &extra_data->tag_stack);
+    gumbo_vector_add(parser, (void*)(intptr_t) node->v.element.tag, &extra_data->tag_stack);
   }
   return error;
 }
@@ -746,8 +759,8 @@ static bool node_html_tag_is(const GumboNode* node, GumboTag tag) {
   return node_qualified_tag_is(node, GUMBO_NAMESPACE_HTML, tag);
 }
 
-static bool push_template_insertion_mode(GumboParser* parser, GumboInsertionMode mode) [[nodiscard]] {
-  return gumbo_vector_add(
+static void push_template_insertion_mode(GumboParser* parser, GumboInsertionMode mode) {
+  gumbo_vector_add(
       parser, (void*)(intptr_t) mode, &parser->_parser_state->_template_insertion_modes);
 }
 
@@ -843,7 +856,7 @@ InsertionLocation get_appropriate_insertion_location(GumboParser* parser, GumboN
 
 // Appends a node to the end of its parent, setting the "parent" and
 // "index_within_parent" fields appropriately.
-static bool append_node(GumboParser* parser, GumboNode* parent, GumboNode* node) [[nodiscard]] {
+static void append_node(GumboParser* parser, GumboNode* parent, GumboNode* node) {
   assert(node->parent == NULL);
   assert(node->index_within_parent == -1);
   GumboVector* children;
@@ -856,12 +869,8 @@ static bool append_node(GumboParser* parser, GumboNode* parent, GumboNode* node)
   }
   node->parent = parent;
   node->index_within_parent = children->length;
-  if (gumbo_vector_add(parser, (void*) node, children)) {
-    node->index_within_parent = -1;
-    return true;
-  }
+  gumbo_vector_add(parser, (void*) node, children);
   assert(node->index_within_parent < children->length);
-  return false;
 }
 
 // Inserts a node at the specified InsertionLocation, updating the
@@ -1784,6 +1793,7 @@ static void adjust_foreign_attributes(GumboParser* parser, GumboToken* token) {
       continue;
     }
     gumbo_parser_deallocate(parser, (void*) attr->name);
+    attr->name = NULL;
     attr->attr_namespace = entry->attr_namespace;
     attr->name = gumbo_copy_stringz(parser, entry->local_name);
   }
@@ -1801,6 +1811,7 @@ static void adjust_svg_attributes(GumboParser* parser, GumboToken* token) {
       continue;
     }
     gumbo_parser_deallocate(parser, (void*) attr->name);
+    attr->name = NULL;
     attr->name = gumbo_copy_stringz(parser, entry->to.data);
   }
 }
@@ -1816,6 +1827,7 @@ static void adjust_mathml_attributes(GumboParser* parser, GumboToken* token) {
     return;
   }
   gumbo_parser_deallocate(parser, (void*) attr->name);
+  attr->name = NULL;
   attr->name = gumbo_copy_stringz(parser, "definitionURL");
 }
 
@@ -4052,10 +4064,22 @@ GumboOutput* gumbo_parse(const char* buffer) {
 GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* buffer, size_t length) {
   GumboParser parser = {0};
   parser._options = options;
+
+  if (SETJMP(parser._oom_buf)) {
+    if (parser._parser_state)
+      parser_state_destroy(&parser);
+    if (parser._tokenizer_state)
+      gumbo_tokenizer_state_destroy(&parser);
+
+    gumbo_destroy_output(options, parser._output);
+    gumbo_debug("Failed to initialize & run the parser: out of memory!\n");
+    return NULL;
+  }
+
   output_init(&parser);
   gumbo_tokenizer_state_init(&parser, buffer, length);
   parser_state_init(&parser);
-  if (NULL == parser._parser_state || NULL == parser._output) {
+  if (NULL == parser._parser_state) {
     gumbo_debug("Failed to initialize the parser.\n");
     return NULL;
   }
@@ -4205,7 +4229,10 @@ void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
   // options object.
   GumboParser parser = {0};
   parser._options = options;
-  destroy_node(&parser, output->document);
+  assert(options != NULL);
+  if (NULL != output->document) {
+    destroy_node(&parser, output->document);
+  }
   for (unsigned int i = 0; i < output->errors.length; ++i) {
     gumbo_error_destroy(&parser, output->errors.data[i]);
   }
@@ -4216,7 +4243,8 @@ void gumbo_destroy_output(const GumboOptions* options, GumboOutput* output) {
     int i = 0;
     do {
       errmsg = output->error_messages[i++];
-      if (errmsg) gumbo_parser_deallocate(&parser, (void *)errmsg);
+      if (errmsg)
+		  gumbo_parser_deallocate(&parser, (void *)errmsg);
     } while (errmsg);
     gumbo_parser_deallocate(&parser, (void *)output->error_messages);
   }
