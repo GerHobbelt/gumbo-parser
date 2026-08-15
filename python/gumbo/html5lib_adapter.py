@@ -77,10 +77,42 @@ def _insert_processing_instruction(treebuilder, source_node):
   node.element.nodeType = node.element.PROCESSING_INSTRUCTION_NODE
   treebuilder.document.appendChild(node)
 
+_TEXT_NODE_TYPES = (
+    gumboc.NodeType.TEXT,
+    gumboc.NodeType.WHITESPACE,
+    gumboc.NodeType.CDATA,
+)
+
+def _insert_text_run(treebuilder, run):
+  # Gumbo deliberately keeps CDATA sections as distinct nodes so clients can
+  # tell them apart, but in the DOM they are plain character data: a
+  # TEXT|CDATA|TEXT run is a single Text node in browsers and in the expected
+  # trees, so such runs are coalesced here. Runs *without* a CDATA node are
+  # inserted one node at a time on purpose: adjacent TEXT nodes coming out of
+  # Gumbo indicate a tree-construction bug.
+  if len(run) > 1 and any(n.type == gumboc.NodeType.CDATA for n in run):
+    treebuilder.insertText(
+        ''.join(n.v.text.text.decode('utf-8') for n in run))
+  else:
+    for node in run:
+      treebuilder.insertText(node.v.text.text.decode('utf-8'))
+
+def _insert_children(treebuilder, children):
+  run = []
+  for child_node in children:
+    if child_node.type in _TEXT_NODE_TYPES:
+      run.append(child_node)
+      continue
+    if run:
+      _insert_text_run(treebuilder, run)
+      run = []
+    _insert_node(treebuilder, child_node)
+  if run:
+    _insert_text_run(treebuilder, run)
+
 def _insert_root(treebuilder, source_node, pop_element = True):
   treebuilder.insertRoot(_convert_element(source_node))
-  for child_node in source_node.children:
-    _insert_node(treebuilder, child_node)
+  _insert_children(treebuilder, source_node.children)
   if pop_element:
     treebuilder.openElements.pop()
 
@@ -95,15 +127,11 @@ def _insert_node(treebuilder, source_node):
       'data': {},
     })
     treebuilder.openElements.pop()
-  elif source_node.type in (
-      gumboc.NodeType.TEXT,
-      gumboc.NodeType.WHITESPACE,
-      gumboc.NodeType.CDATA):
-    treebuilder.insertText(source_node.v.text.text.decode('utf-8'))
+  elif source_node.type in _TEXT_NODE_TYPES:
+    _insert_text_run(treebuilder, [source_node])
   else:
     treebuilder.insertElementNormal(_convert_element(source_node))
-    for child_node in source_node.v.element.children:
-      _insert_node(treebuilder, child_node)
+    _insert_children(treebuilder, source_node.v.element.children)
     treebuilder.openElements.pop()
 
 
@@ -129,7 +157,9 @@ class HTMLParser(object):
         elif node.type in (gumboc.NodeType.ELEMENT, gumboc.NodeType.TEMPLATE):
           _insert_root(self.tree, output.contents.root.contents)
         else:
-          assert 'Only comments and <html> nodes allowed at the root'
+          raise AssertionError(
+              'Only comments, PIs and <html> nodes allowed at the root; '
+              'found %r' % node.type)
       return self.tree.getDocument()
 
   def parseFragment(self, text_or_file, container, **kwargs):
@@ -152,5 +182,6 @@ class HTMLParser(object):
         if node.type in (gumboc.NodeType.ELEMENT, gumboc.NodeType.TEMPLATE):
           _insert_root(self.tree, output.contents.root.contents, False)
         else:
-          assert 'Malformed fragment parse (??)'
+          raise AssertionError(
+              'Malformed fragment parse; found %r at the root' % node.type)
       return self.tree.getFragment()
