@@ -46,6 +46,7 @@ if get_option('tests')
 		'tests/string_buffer.cc',
 		'tests/string_piece.cc',
 		'tests/tag.cc',
+		'tests/tree_construction.cc',
 		'tests/tokenizer.cc',
 		'tests/test_utils.cc',
 		'tests/utf8.cc',
@@ -62,7 +63,7 @@ if get_option('tests')
 		install: false
 	)
 
-	test('gumbo_test', gumbo_test)
+	test('gumbo_test', gumbo_test, workdir: meson.current_source_dir())
 endif
 
 if get_option('examples')
