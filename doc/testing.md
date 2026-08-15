@@ -50,13 +50,8 @@ and update tests database with this command:
 
 ```
 export CC=clang CXX=clang++
-```
-```
-meson setup --wipe builddir --buildtype=debug -Dfuzz=true
-```
-```
-meson compile -C builddir
-```
-```
-./builddir/gumbo_fuzz -jobs=4 fuzz/corpus
+meson setup --wipe buildfuzz --buildtype=debugoptimized -Dfuzz=true
+meson compile -C buildfuzz
+mkdir -p fuzz_artifacts
+UBSAN_OPTIONS=print_stacktrace=1 ./buildfuzz/gumbo_fuzz -jobs=4 -artifact_prefix=fuzz_artifacts -print_final_stats=1 fuzz/corpus
 ```
