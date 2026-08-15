@@ -41,11 +41,8 @@ def html5lib_test_files():
     path for path in glob.glob(
       os.path.join(
         TESTDATA_BASE_PATH,
-        'testdata',
-        'html',
-        'syntax',
-        'parsing',
-        'resources',
+        'tests',
+        'tree_construction',
         '*.dat',
       )
     )
