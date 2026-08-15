@@ -766,8 +766,8 @@ TEST_F(GumboTokenizerTest, ProcessingInstructionReservedTargetCaseInsensitive) {
 TEST_F(GumboTokenizerTest, ProcessingInstructionReservedTargetPrefix) {
   SetInput("<?xmlfoo>");
   EXPECT_TRUE(gumbo_lex(&parser_, &token_));
-  ASSERT_EQ(GUMBO_TOKEN_COMMENT, token_.type);
-  EXPECT_STREQ("?xmlfoo", token_.v.text);
+  ASSERT_EQ(GUMBO_TOKEN_PROCESSING_INSTRUCTION, token_.type);
+  EXPECT_STREQ("xmlfoo ", token_.v.text);
 }
 
 TEST_F(GumboTokenizerTest, ProcessingInstructionInvalidTargetStart) {
