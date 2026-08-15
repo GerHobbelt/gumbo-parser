@@ -2336,4 +2336,26 @@ TEST_F(GumboParserTest, FosterParentingTextMergedAcrossMultipleFlushes) {
   ASSERT_EQ(0, GetChildCount(tr));
 }
 
+TEST_F(GumboParserTest, DoctypeInNoscriptIgnoredWithoutLeak) {
+  // A DOCTYPE token in the "in head noscript" insertion mode is a parse
+  // error and must be ignored and freed (it was leaking before this test).
+  Parse("<head><noscript><!doctype html></noscript>");
+
+  EXPECT_FALSE(root_->v.document.has_doctype);
+
+  GumboNode* html = GetChild(root_, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, html->type);
+  EXPECT_EQ(GUMBO_TAG_HTML, GetTag(html));
+
+  GumboNode* head = GetChild(html, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, head->type);
+  EXPECT_EQ(GUMBO_TAG_HEAD, GetTag(head));
+  ASSERT_EQ(1, GetChildCount(head));
+
+  GumboNode* noscript = GetChild(head, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, noscript->type);
+  EXPECT_EQ(GUMBO_TAG_NOSCRIPT, GetTag(noscript));
+  ASSERT_EQ(0, GetChildCount(noscript));
+}
+
 }  // namespace
