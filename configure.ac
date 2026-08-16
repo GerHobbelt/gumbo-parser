@@ -40,8 +40,8 @@ LT_INIT
 AC_OUTPUT
 
 AC_MSG_WARN([])
-AC_MSG_WARN([=====================================])
-AC_MSG_WARN([Autotools build system is deprecated!])
+AC_MSG_WARN([============= WARNING ===============])
+AC_MSG_WARN([Autotools build method is deprecated!])
 AC_MSG_WARN([Please use Meson build system instead])
 AC_MSG_WARN([=====================================])
 AC_MSG_WARN([])
