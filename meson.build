@@ -68,6 +68,22 @@ install_headers('src/gumbo.h', 'src/tag_enum.h')
 pkg = import('pkgconfig')
 pkg.generate(libgumbo, filebase: 'gumbo', name: 'Gumbo', description: 'HTML parser library implemented in C99')
 
+if get_option('python')
+	if get_option('default_library') == 'static'
+		error('Python bindings require the shared library')
+	endif
+
+	python = import('python').find_installation('python3')
+
+	python.install_sources(
+		'python/gumbo/__init__.py',
+		'python/gumbo/gumboc.py',
+		'python/gumbo/html5lib_adapter.py',
+		'python/gumbo/soup_adapter.py',
+		subdir: 'gumbo',
+	)
+endif
+
 if get_option('tests')
 	add_languages('cpp', native: false)
 
