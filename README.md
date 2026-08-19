@@ -47,37 +47,35 @@ meson install -C build
 
 ## Example
 
-```
-example.c
-```
 ```c
 #include <gumbo.h>
 #include <stdio.h>
 
+// Compile like this:
+// gcc example.c `pkg-config --cflags --libs gumbo`
+
+void print_tree(const GumboNode *node, int depth) {
+	if (node->type == GUMBO_NODE_ELEMENT) {
+		printf("%*s<%s>\n", depth * 2, "", gumbo_normalized_tagname(node->v.element.tag));
+		unsigned children_count = node->v.element.children.length;
+		for (unsigned i = 0; i < children_count; ++i) {
+			print_tree(node->v.element.children.data[i], depth + 1);
+		}
+	} else if (node->type == GUMBO_NODE_TEXT) {
+		printf("%*s%s\n", depth * 2, "", node->v.text.text);
+	}
+}
+
 int main() {
 	GumboOutput *output = gumbo_parse("<h1>Hello, World!</h1>");
-
-	const GumboNode *stack[64] = {output->root};
-	int depth[64] = {0};
-	for (int top = 0; top >= 0; --top) {
-		const GumboNode *node = stack[top];
-		int d = depth[top];
-		if (node->type == GUMBO_NODE_ELEMENT) {
-			printf("%*s<%s>\n", d * 2, "", gumbo_normalized_tagname(node->v.element.tag));
-			for (unsigned i = node->v.element.children.length; i-- > 0; ++top) {
-				stack[top] = node->v.element.children.data[i];
-				depth[top] = d + 1;
-			}
-		} else if (node->type == GUMBO_NODE_TEXT) {
-			printf("%*s%s\n", d * 2, "", node->v.text.text);
-		}
-	}
-
+	print_tree(output->root, 0);
+	// <html>
+	//   <head>
+	//   <body>
+	//     <h1>
+	//       Hello, World!
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 }
-```
-```
-gcc example.c `pkg-config --cflags --libs gumbo`
 ```
 
 A variety of sample programs can be found in the [examples](https://codeberg.org/gumbo-parser/gumbo-parser/src/branch/master/examples) directory.
