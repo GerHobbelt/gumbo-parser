@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 """Tests for the Gumbo => Html5lib adapter."""
-import codecs
 import collections
 import glob
 import os
@@ -37,15 +36,27 @@ def convertTreeDump(data):
   return "\n".join(convertExpected(data, 3).split("\n")[1:])
 
 
-# Copied/adapted/simplified from html5lib.tests/support.py
 def html5lib_test_files():
-  return glob.glob(os.path.join(
-      TESTDATA_BASE_PATH, 'testdata', 'tree-construction', '*.dat'))
+  return [
+    path for path in glob.glob(
+      os.path.join(
+        TESTDATA_BASE_PATH,
+        'testdata',
+        'html',
+        'syntax',
+        'parsing',
+        'resources',
+        '*.dat',
+      )
+    )
+    # scripted tests include javascript functionality
+    if not os.path.basename(path).startswith('scripted_')
+  ]
 
 
 class TestData(object):
   def __init__(self, filename):
-    self.f = codecs.open(filename, encoding="utf8")
+    self.f = open(filename, encoding='utf-8', newline='')
 
   def __iter__(self):
     data = collections.defaultdict(lambda: None)
