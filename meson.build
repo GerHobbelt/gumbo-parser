@@ -1,7 +1,7 @@
 project(
 	'gumbo-parser',
 	'c',
-	version: '0.13.2',
+	version: '0.14.0',
 	default_options: ['c_std=c99', 'default_library=both'],
 )
 
@@ -58,7 +58,7 @@ endif
 libgumbo = library(
 	'gumbo',
 	gumbo_src,
-	version: '3.0.0',
+	version: '4.0.0',
 	install: true,
 	override_options: fuzz_library_overrides
 )

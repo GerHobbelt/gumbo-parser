@@ -1,3 +1,35 @@
+## Gumbo 0.14.0 (2026-08-26)
+
+This is feature release with ABI changes. Users **MUST** rebuild to use new version!
+
+#### Library
+
+* Add `gumbo_tag_is_void()` public API function
+* Add support for `<selectedcontent>` tag (`GUMBO_TAG_SELECTEDCONTENT`)
+* Add support for [processing instructions](https://github.com/whatwg/html/pull/12118) (`GUMBO_NODE_PROCESSING_INSTRUCTION`)
+* Comply with [spec changes](https://github.com/whatwg/html/pull/10548) to `<select>` parsing logic
+* Fix compliance to [adoption agency algorithm, step 4.3](https://github.com/whatwg/html/pull/12599)
+* [Fix foster parented text not being merged into preceding text node](https://codeberg.org/gumbo-parser/gumbo-parser/commit/41a0f3e68aba09aa8b2e007fab6df30ab6e04015)
+* [Fix memory leak of ignored doctype token in "in head noscript" insertion mode](https://codeberg.org/gumbo-parser/gumbo-parser/commit/6ea73e48751a80e62b3d43cef4c299e695049fa9)
+* [Delete dependency on Ragel](https://codeberg.org/gumbo-parser/gumbo-parser/commit/a70f6394f14453f3c871376d0b3ededd97ec3505) (state machine compiler previously used to parse HTML entities)
+* Adapt to migration of tree construction tests suite from [html5lib-tests](https://github.com/html5lib/html5lib-tests/pull/198) to [WPT](https://github.com/web-platform-tests/wpt/pull/60896)
+* [Run all tests in Codeberg CI on every commit to master](https://codeberg.org/gumbo-parser/gumbo-parser/src/commit/aa743b25e9ca3e1c7ef428b69f4da48c1f58ed3e/.woodpecker/alpine.yaml) (including WPT's tree construction tests)
+
+#### Python
+
+* Upgrade `soup_adapter.py` to Beautiful Soup 4
+* Fetch tag list for Python bindings from shared library
+* Make shared library systemwide lookup more extensive
+* Fix off-by-one bounds checks and incorrect UTF-8 length in `parse()`
+* Migrate more code from Python 2 incantations
+
+#### Mentions
+
+* Haelwenn Monnier (@lanodan) thanks for #29
+* Xavier Morel (@xmo) thanks for #35, #40, #41, #42
+
+### This release is fully compliant with WPT tree construction tests (2026-08-21, [8f1efd2](https://github.com/web-platform-tests/wpt/tree/8f1efd278facb6c96d46c0cd92897a8a3faeaf29/html/syntax/parsing/resources))
+
 ## Gumbo 0.13.2 (2025-08-26)
 
 This is a maintenance release with no API/ABI changes.
