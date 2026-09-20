@@ -992,7 +992,8 @@ static GumboNode* clone_node_recursively(GumboParser* parser, const GumboNode* s
     case GUMBO_NODE_TEXT:
     case GUMBO_NODE_CDATA:
     case GUMBO_NODE_WHITESPACE:
-    case GUMBO_NODE_COMMENT: {
+    case GUMBO_NODE_COMMENT:
+    case GUMBO_NODE_PROCESSING_INSTRUCTION: {
       GumboNode* t = create_node(parser, src->type);
       const char* s = src->v.text.text;
       t->v.text.text = s ? gumbo_copy_stringz(parser, s) : NULL;
@@ -1108,10 +1109,19 @@ static GumboNode* pop_current_node(GumboParser* parser) {
   return current_node;
 }
 
-static void append_comment_node(GumboParser* parser, GumboNode* node, const GumboToken* token) {
+static bool is_token_commentlike(const GumboToken* token) {
+  return token->type == GUMBO_TOKEN_COMMENT || token->type == GUMBO_TOKEN_PROCESSING_INSTRUCTION;
+}
+
+static void append_commentlike_node(
+    GumboParser* parser, GumboNode* node, const GumboToken* token) {
   maybe_flush_text_node_buffer(parser);
-  GumboNode* comment = create_node(parser, GUMBO_NODE_COMMENT);
-  comment->type = GUMBO_NODE_COMMENT;
+  GumboNodeType type
+    = token->type == GUMBO_TOKEN_PROCESSING_INSTRUCTION
+    ? GUMBO_NODE_PROCESSING_INSTRUCTION
+    : GUMBO_NODE_COMMENT;
+  GumboNode* comment = create_node(parser, type);
+  comment->type = type;
   comment->parse_flags = GUMBO_INSERTION_NORMAL;
   comment->v.text.text = token->v.text;
   comment->v.text.original_text = token->original_text;
@@ -2295,8 +2305,8 @@ static bool handle_initial(GumboParser* parser, GumboToken* token) {
   if (token->type == GUMBO_TOKEN_WHITESPACE) {
     ignore_token(parser);
     return true;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_document_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_document_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_DOCTYPE) {
     document->has_doctype = true;
@@ -2320,8 +2330,8 @@ static bool handle_before_html(GumboParser* parser, GumboToken* token) {
     parser_add_parse_error(parser, token);
     ignore_token(parser);
     return false;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_document_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_document_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_WHITESPACE) {
     ignore_token(parser);
@@ -2354,8 +2364,8 @@ static bool handle_before_head(GumboParser* parser, GumboToken* token) {
     parser_add_parse_error(parser, token);
     ignore_token(parser);
     return false;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_WHITESPACE) {
     ignore_token(parser);
@@ -2394,8 +2404,8 @@ static bool handle_in_head(GumboParser* parser, GumboToken* token) {
     parser_add_parse_error(parser, token);
     ignore_token(parser);
     return false;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (tag_is(token, kStartTag, GUMBO_TAG_HTML)) {
     return handle_in_body(parser, token);
@@ -2493,7 +2503,7 @@ static bool handle_in_head_noscript(GumboParser* parser, GumboToken* token) {
     set_insertion_mode(parser, GUMBO_INSERTION_MODE_IN_HEAD);
     return true;
   } else if (token->type == GUMBO_TOKEN_WHITESPACE ||
-             token->type == GUMBO_TOKEN_COMMENT ||
+             is_token_commentlike(token) ||
              tag_in(token, kStartTag,
                  (gumbo_tagset){
                      TAG(BASEFONT),
@@ -2532,8 +2542,8 @@ static bool handle_after_head(GumboParser* parser, GumboToken* token) {
     parser_add_parse_error(parser, token);
     ignore_token(parser);
     return false;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (tag_is(token, kStartTag, GUMBO_TAG_HTML)) {
     return handle_in_body(parser, token);
@@ -2646,6 +2656,7 @@ static size_t destroy_one_node(void* parser_, GumboNode* node) {
     case GUMBO_NODE_CDATA:
     case GUMBO_NODE_COMMENT:
     case GUMBO_NODE_WHITESPACE:
+    case GUMBO_NODE_PROCESSING_INSTRUCTION:
       gumbo_parser_deallocate(parser, (void*) node->v.text.text);
       break;
   }
@@ -2675,8 +2686,8 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     insert_text_token(parser, token);
     set_frameset_not_ok(parser);
     return true;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_DOCTYPE) {
     parser_add_parse_error(parser, token);
@@ -3398,8 +3409,8 @@ static bool handle_in_table(GumboParser* parser, GumboToken* token) {
     parser_add_parse_error(parser, token);
     ignore_token(parser);
     return false;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (tag_is(token, kStartTag, GUMBO_TAG_CAPTION)) {
     clear_stack_to_table_context(parser);
@@ -3604,8 +3615,8 @@ static bool handle_in_column_group(GumboParser* parser, GumboToken* token) {
     parser_add_parse_error(parser, token);
     ignore_token(parser);
     return false;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (tag_is(token, kStartTag, GUMBO_TAG_HTML)) {
     return handle_in_body(parser, token);
@@ -3837,7 +3848,7 @@ static bool handle_in_template(GumboParser* parser, GumboToken* token) {
   GumboParserState* state = parser->_parser_state;
   if (token->type == GUMBO_TOKEN_WHITESPACE ||
       token->type == GUMBO_TOKEN_CHARACTER ||
-      token->type == GUMBO_TOKEN_COMMENT || token->type == GUMBO_TOKEN_NULL ||
+      is_token_commentlike(token) || token->type == GUMBO_TOKEN_NULL ||
       token->type == GUMBO_TOKEN_DOCTYPE) {
     return handle_in_body(parser, token);
   } else if (tag_in(token, kStartTag, (gumbo_tagset){HEAD_TAGS}) ||
@@ -3903,10 +3914,10 @@ static bool handle_after_body(GumboParser* parser, GumboToken* token) {
   if (token->type == GUMBO_TOKEN_WHITESPACE ||
       tag_is(token, kStartTag, GUMBO_TAG_HTML)) {
     return handle_in_body(parser, token);
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
+  } else if (is_token_commentlike(token)) {
     GumboNode* html_node = parser->_output->root;
     assert(html_node != NULL);
-    append_comment_node(parser, html_node, token);
+    append_commentlike_node(parser, html_node, token);
     return true;
   } else if (token->type == GUMBO_TOKEN_DOCTYPE) {
     parser_add_parse_error(parser, token);
@@ -3940,8 +3951,8 @@ static bool handle_in_frameset(GumboParser* parser, GumboToken* token) {
   if (token->type == GUMBO_TOKEN_WHITESPACE) {
     insert_text_token(parser, token);
     return true;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_DOCTYPE) {
     parser_add_parse_error(parser, token);
@@ -3989,8 +4000,8 @@ static bool handle_after_frameset(GumboParser* parser, GumboToken* token) {
   if (token->type == GUMBO_TOKEN_WHITESPACE) {
     insert_text_token(parser, token);
     return true;
-  } else if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_current_node(parser), token);
+  } else if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_current_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_DOCTYPE) {
     parser_add_parse_error(parser, token);
@@ -4018,8 +4029,8 @@ static bool handle_after_frameset(GumboParser* parser, GumboToken* token) {
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#the-after-after-body-insertion-mode
 static bool handle_after_after_body(GumboParser* parser, GumboToken* token) {
-  if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_document_node(parser), token);
+  if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_document_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_DOCTYPE ||
              token->type == GUMBO_TOKEN_WHITESPACE ||
@@ -4037,8 +4048,8 @@ static bool handle_after_after_body(GumboParser* parser, GumboToken* token) {
 
 // http://www.whatwg.org/specs/web-apps/current-work/complete/tokenization.html#the-after-after-frameset-insertion-mode
 static bool handle_after_after_frameset(GumboParser* parser, GumboToken* token) {
-  if (token->type == GUMBO_TOKEN_COMMENT) {
-    append_comment_node(parser, get_document_node(parser), token);
+  if (is_token_commentlike(token)) {
+    append_commentlike_node(parser, get_document_node(parser), token);
     return true;
   } else if (token->type == GUMBO_TOKEN_DOCTYPE ||
              token->type == GUMBO_TOKEN_WHITESPACE ||
@@ -4105,7 +4116,8 @@ static bool handle_in_foreign_content(GumboParser* parser, GumboToken* token) {
       set_frameset_not_ok(parser);
       return true;
     case GUMBO_TOKEN_COMMENT:
-      append_comment_node(parser, get_current_node(parser), token);
+    case GUMBO_TOKEN_PROCESSING_INSTRUCTION:
+      append_commentlike_node(parser, get_current_node(parser), token);
       return true;
     case GUMBO_TOKEN_DOCTYPE:
       parser_add_parse_error(parser, token);
@@ -4429,6 +4441,9 @@ GumboOutput* gumbo_parse_with_options(const GumboOptions* options, const char* b
         break;
       case GUMBO_TOKEN_COMMENT:
         token_type = "comment";
+        break;
+      case GUMBO_TOKEN_PROCESSING_INSTRUCTION:
+        token_type = "processing instruction";
         break;
       default:
         break;
