@@ -26,12 +26,63 @@ gumbo_src = files(
 	'src/vector.c',
 )
 
-libgumbo = library('gumbo', gumbo_src, version: '3.0.0', install: true)
+if get_option('fuzz')
+	if not meson.get_compiler('c').get_id().startswith('clang')
+		error('Fuzzing requires clang. Try export CC=clang CXX=clang++')
+	endif
+
+	fuzz_languages = ['c']
+	if add_languages('cpp', native: false)
+		fuzz_languages += 'cpp'
+		if not meson.get_compiler('cpp').get_id().startswith('clang')
+			error('Fuzzing requires clang. Try export CC=clang CXX=clang++')
+		endif
+	endif
+
+	add_project_arguments(
+		'-fsanitize=fuzzer-no-link,address,undefined',
+		'-fno-sanitize-recover=all',
+		'-fno-omit-frame-pointer',
+		language: fuzz_languages,
+	)
+	add_project_link_arguments(
+		'-fsanitize=address,undefined',
+		language: fuzz_languages,
+	)
+
+	fuzz_library_overrides = ['b_lundef=false']
+else
+	fuzz_library_overrides = []
+endif
+
+libgumbo = library(
+	'gumbo',
+	gumbo_src,
+	version: '3.0.0',
+	install: true,
+	override_options: fuzz_library_overrides
+)
 
 install_headers('src/gumbo.h', 'src/tag_enum.h')
 
 pkg = import('pkgconfig')
 pkg.generate(libgumbo, filebase: 'gumbo', name: 'Gumbo', description: 'HTML parser library implemented in C99')
+
+if get_option('python')
+	if get_option('default_library') == 'static'
+		error('Python bindings require the shared library')
+	endif
+
+	python = import('python').find_installation('python3')
+
+	python.install_sources(
+		'python/gumbo/__init__.py',
+		'python/gumbo/gumboc.py',
+		'python/gumbo/html5lib_adapter.py',
+		'python/gumbo/soup_adapter.py',
+		subdir: 'gumbo',
+	)
+endif
 
 if get_option('tests')
 	add_languages('cpp', native: false)
@@ -46,6 +97,7 @@ if get_option('tests')
 		'tests/string_buffer.cc',
 		'tests/string_piece.cc',
 		'tests/tag.cc',
+		'tests/tree_construction.cc',
 		'tests/tokenizer.cc',
 		'tests/test_utils.cc',
 		'tests/utf8.cc',
@@ -62,7 +114,7 @@ if get_option('tests')
 		install: false
 	)
 
-	test('gumbo_test', gumbo_test)
+	test('gumbo_test', gumbo_test, workdir: meson.current_source_dir())
 endif
 
 if get_option('examples')
@@ -84,19 +136,12 @@ if get_option('examples')
 endif
 
 if get_option('fuzz')
-	add_languages('cpp', native: false)
-
-	if not meson.get_compiler('cpp').get_id().startswith('clang')
-		error('Fuzzing requires clang. Try export CC=clang CXX=clang++')
-	endif
-
 	gumbo_fuzz = executable(
 		'gumbo_fuzz',
-		files('fuzz/fuzz_target.cc'),
-		cpp_args: ['-fsanitize=fuzzer,address,undefined'],
-		link_args: ['-fsanitize=fuzzer,address,undefined'],
+		'fuzz/fuzz_target.cc',
+		link_args: ['-fsanitize=fuzzer'],
 		link_with: [libgumbo],
 		include_directories: ['src'],
-		install: false
+		install: false,
 	)
 endif

@@ -30,3 +30,12 @@ ${LIBTOOLIZE:-libtoolize} "$@"
 ${ACLOCAL:-aclocal -I m4} "$@"
 ${AUTOCONF:-autoconf} "$@"
 ${AUTOMAKE:-automake} --add-missing
+
+set +x
+
+echo
+echo "============= WARNING ==============="
+echo "Autotools build method is deprecated!"
+echo "Please use Meson build system instead"
+echo "====================================="
+echo

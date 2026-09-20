@@ -11,8 +11,11 @@ steps:
         gtest-dev
         meson
         py3-html5lib
+        py3-beautifulsoup4
       - meson setup build -Dexamples=true
       - meson compile -C build
       - meson test --interactive -C build
       - ln -s "$(realpath ./build/libgumbo.so)" python/gumbo/libgumbo.so
+      - PYTHONPATH=python python3 -m gumbo.gumboc_test
+      - PYTHONPATH=python python3 -m gumbo.soup_adapter_test
       - PYTHONPATH=python python3 -m gumbo.html5lib_adapter_test

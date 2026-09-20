@@ -195,6 +195,11 @@ def BuildTestCases(cls):
       setattr(cls, test_func.__name__, test_func)
 
 
-if __name__ == '__main__':
+def load_tests(loader, tests, pattern):
   BuildTestCases(Html5libAdapterTest)
+  tests.addTests(loader.loadTestsFromTestCase(Html5libAdapterTest))
+  return tests
+
+
+if __name__ == '__main__':
   unittest.main()
