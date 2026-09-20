@@ -33,8 +33,17 @@ python3 -m unittest discover -s python -p '*test.py'
 ## Web Platform Tests tree construction tests
 
 ```sh
-git submodule update --init
 PYTHONPATH=python python3 -m gumbo.html5lib_adapter_test  # requires html5lib
+```
+
+This will run tree construction tests against checked-in set of WPT's tree
+construction scenarios which are located in `tests/tree_construction`.
+
+If you want to check against fresh set of WPT's tree construction scenarios,
+you need to clone [wpt](https://github.com/web-platform-tests/wpt) somewhere
+and update tests database with this command:
+```sh
+./tests/tree_construction/update.sh PATH_TO_YOUR_WPT_DIRECTORY
 ```
 
 ## Fuzzing
