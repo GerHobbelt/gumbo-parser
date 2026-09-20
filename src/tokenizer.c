@@ -987,11 +987,17 @@ static StateResult handle_plaintext_state(GumboParser* parser,
   }
 }
 
-static bool pi_target_is_xml_reserved(const GumboStringBuffer* target) {
-  return target->length >= 3
-      && (target->data[0] == 'x' || target->data[0] == 'X')
-      && (target->data[1] == 'm' || target->data[1] == 'M')
-      && (target->data[2] == 'l' || target->data[2] == 'L');
+// Target must not be an ASCII case-insensitive match for "xml" or
+// "xml-stylesheet"; those parse as bogus comments instead, as per spec:
+//
+// > In HTML, "<?xml ...?>" and "<?xml-stylesheet ...?>" specifically
+// > are not parsed as processing instructions but instead treated as
+// > bogus comments. This is for compatibility with existing HTML
+// > content, where such syntax is relatively common.
+static bool pi_target_is_xml_reserved(const GumboStringBuffer* t) {
+  const GumboStringPiece target = {t->data, t->length};
+  return gumbo_string_equals_ignore_case(&target, &(GumboStringPiece){"xml", 3})
+      || gumbo_string_equals_ignore_case(&target, &(GumboStringPiece){"xml-stylesheet", 14});
 }
 
 // https://html.spec.whatwg.org/multipage/syntax.html#processing-instructions

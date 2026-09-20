@@ -141,6 +141,12 @@ class Html5libAdapterTest(unittest.TestCase):
     else:
       document = p.parse(io.StringIO(input))
 
+    # The DOM treebuilder's testSerializer starts with element.normalize(),
+    # which merges adjacent Text nodes before serializing. That would hide
+    # Gumbo bugs that erroneously split character runs, so disable it for this
+    # tree: adapter is responsible for producing correctly shaped text nodes.
+    document.normalize = lambda: None
+
     with warnings.catch_warnings():
       # Etree serializer in html5lib uses a deprecated getchildren() API.
       warnings.filterwarnings('ignore', category=DeprecationWarning)

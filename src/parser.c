@@ -963,7 +963,33 @@ static void maybe_flush_text_node_buffer(GumboParser* parser) {
   gumbo_debug("Flushing text node buffer of %s.\n", gumbo_string_buffer_cstr(parser, &buffer_state->_buffer));
 
   InsertionLocation location = get_appropriate_insertion_location(parser, NULL);
-  if (location.target->type == GUMBO_NODE_DOCUMENT) {
+  GumboNode* prev = NULL;
+  if (location.target->type == GUMBO_NODE_ELEMENT ||
+      location.target->type == GUMBO_NODE_TEMPLATE) {
+    GumboVector* siblings = &location.target->v.element.children;
+    if (location.index == -1) {
+      if (siblings->length > 0) prev = siblings->data[siblings->length - 1];
+    } else if (location.index > 0) {
+      prev = siblings->data[location.index - 1];
+    }
+  }
+  if (prev != NULL &&
+      (prev->type == GUMBO_NODE_TEXT || prev->type == GUMBO_NODE_WHITESPACE) &&
+      (text_node->type == GUMBO_NODE_TEXT ||
+       text_node->type == GUMBO_NODE_WHITESPACE)) {
+    GumboText* prev_data = &prev->v.text;
+    size_t prev_length = strlen(prev_data->text);
+    size_t added_length = strlen(text_node_data->text);
+    char* merged = gumbo_parser_allocate(parser, prev_length + added_length + 1);
+    memcpy(merged, prev_data->text, prev_length);
+    memcpy(merged + prev_length, text_node_data->text, added_length + 1);
+    gumbo_parser_deallocate(parser, (void*) prev_data->text);
+    prev_data->text = merged;
+    if (text_node->type == GUMBO_NODE_TEXT) {
+      prev->type = GUMBO_NODE_TEXT;
+    }
+    destroy_node(parser, text_node);
+  } else if (location.target->type == GUMBO_NODE_DOCUMENT) {
     // The DOM does not allow Document nodes to have Text children, so per the
     // spec, they are dropped on the floor.
     destroy_node(parser, text_node);
@@ -2493,6 +2519,7 @@ static bool handle_in_head(GumboParser* parser, GumboToken* token) {
 static bool handle_in_head_noscript(GumboParser* parser, GumboToken* token) {
   if (token->type == GUMBO_TOKEN_DOCTYPE) {
     parser_add_parse_error(parser, token);
+    ignore_token(parser);
     return false;
   } else if (tag_is(token, kStartTag, GUMBO_TAG_HTML)) {
     return handle_in_body(parser, token);
