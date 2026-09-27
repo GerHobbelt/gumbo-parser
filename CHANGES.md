@@ -1,3 +1,22 @@
+## Gumbo 0.14.1 (2026-09-27)
+
+This is a hotfix release with no API/ABI changes.
+
+#### Library
+
+* Update template parsing to match HTML spec changes (WPT conformance)
+* Guard `</selectedcontent>` against empty stack (crash fix)
+* Skip option clone when it's inside selectedcontent (use-after-free fix)
+* Skip selectedcontent clone while descendant is open/active (use-after-free fix)
+* Default quirks mode to `GUMBO_DOCTYPE_NO_QUIRKS` (use of uninitialized value fix)
+* Avoid `-Wvoid-pointer-to-enum-cast` warnings in `src/error.c` and `src/parser.c`
+
+#### Mentions
+
+* Matt Kempe (@fsbruva) thanks for #46
+
+### This release is fully compliant with WPT tree construction tests (2026-09-11, [12093d1](https://github.com/web-platform-tests/wpt/tree/12093d1ba7ef01a87eae26be626db72489e55ddf/html/syntax/parsing/resources))
+
 ## Gumbo 0.14.0 (2026-08-26)
 
 This is feature release with ABI changes. Users **MUST** rebuild to use new version!

@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.72])
-AC_INIT([gumbo], [0.14.0], [me@txgk.in])
-AC_SUBST(gumbo_version_info, [4:0:0])
+AC_INIT([gumbo], [0.14.1], [me@txgk.in])
+AC_SUBST(gumbo_version_info, [4:1:0])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/parser.c])
 #AC_CONFIG_HEADERS([config.h])
