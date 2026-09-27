@@ -2868,6 +2868,11 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     state->_selectedcontent_state = GUMBO_SELECTEDCONTENT_EMPTY;
     return true;
   } else if (tag_is(token, kEndTag, GUMBO_TAG_SELECTEDCONTENT)) {
+    if (!has_an_element_in_scope(parser, GUMBO_TAG_SELECTEDCONTENT)) {
+      parser_add_parse_error(parser, token);
+      ignore_token(parser);
+      return false;
+    }
     implicitly_close_tags(parser, token, GUMBO_NAMESPACE_HTML, token->v.end_tag);
     state->_selectedcontent_target = NULL;
     return true;

@@ -1282,6 +1282,29 @@ TEST_F(GumboParserTest, SelectedcontentSelectedOption) {
   EXPECT_STREQ("world", text2->v.text.text);
 }
 
+TEST_F(GumboParserTest, SelectedcontentStrayEndTag) {
+  Parse("<p>x</selectedcontent>");
+
+  GumboNode* root = output_->root;
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, root->type);
+  EXPECT_EQ(GUMBO_TAG_HTML, root->v.element.tag);
+
+  ASSERT_EQ(2, GetChildCount(root));
+  GumboNode* body = GetChild(root, 1);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, body->type);
+  ASSERT_EQ(GUMBO_TAG_BODY, body->v.element.tag);
+
+  ASSERT_EQ(1, GetChildCount(body));
+  GumboNode* p = GetChild(body, 0);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, p->type);
+  EXPECT_EQ(GUMBO_TAG_P, p->v.element.tag);
+
+  ASSERT_EQ(1, GetChildCount(p));
+  GumboNode* text = GetChild(p, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, text->type);
+  EXPECT_STREQ("x", text->v.text.text);
+}
+
 TEST_F(GumboParserTest, ImplicitColgroup) {
   Parse("<table><col /><col /></table>");
 
