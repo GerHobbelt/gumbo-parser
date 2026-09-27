@@ -32,6 +32,8 @@
 #include "util.h"
 #include "vector.h"
 
+#define GUMBO_INTERNAL_SCAN_MARK (1 << 14)
+
 #define AVOID_UNUSED_VARIABLE_WARNING(i) (void)(i)
 
 #define GUMBO_STRING(literal) \
@@ -1041,15 +1043,64 @@ static GumboNode* clone_node_recursively(GumboParser* parser, const GumboNode* s
   }
 }
 
+static bool mark_path_and_find(GumboNode* node, const GumboNode* ancestor) {
+  for (GumboNode* it = node; it != NULL; it = it->parent) {
+    if (it == ancestor) {
+      return true;
+    }
+    if (it->parse_flags & GUMBO_INTERNAL_SCAN_MARK) {
+      return false;
+    }
+    it->parse_flags |= GUMBO_INTERNAL_SCAN_MARK;
+  }
+  return false;
+}
+
+static void clear_path_marks(GumboNode* node) {
+  for (GumboNode* it = node;
+       it != NULL && (it->parse_flags & GUMBO_INTERNAL_SCAN_MARK);
+       it = it->parent) {
+    it->parse_flags &= ~GUMBO_INTERNAL_SCAN_MARK;
+  }
+}
+
+static bool tree_has_open_or_active_formatting_element(
+    const GumboParser* parser, const GumboNode* root) {
+  GumboParserState* state = parser->_parser_state;
+  GumboVector* lists[] = {
+      &state->_open_elements,
+      &state->_active_formatting_elements
+  };
+  bool found = false;
+  for (size_t l = 0; l < 2 && !found; ++l) {
+    for (unsigned int i = 0; i < lists[l]->length && !found; ++i) {
+      GumboNode* node = lists[l]->data[i];
+      if (node != &kActiveFormattingScopeMarker && node != root) {
+        found = mark_path_and_find(node, root);
+      }
+    }
+  }
+  if (!found && state->_form_element && state->_form_element != root) {
+    found = mark_path_and_find(state->_form_element, root);
+  }
+  for (size_t l = 0; l < 2; ++l) {
+    for (unsigned int i = 0; i < lists[l]->length; ++i) {
+      GumboNode* node = lists[l]->data[i];
+      if (node != &kActiveFormattingScopeMarker) {
+        clear_path_marks(node);
+      }
+    }
+  }
+  if (state->_form_element) {
+    clear_path_marks(state->_form_element);
+  }
+  return found;
+}
+
 static void maybe_clone_option_into_selectedcontent(GumboParser* parser, GumboParserState* state, GumboNode* option_node) {
   GumboNode* selectedcontent = state->_selectedcontent_target;
   if (!selectedcontent) {
     return;
-  }
-  for (const GumboNode* n = option_node->parent; n; n = n->parent) {
-    if (n == selectedcontent) {
-      return; // prevent cloning an option into its own subtree
-    }
   }
   if (option_node->type != GUMBO_NODE_ELEMENT && option_node->type != GUMBO_NODE_TEMPLATE) {
     return;
@@ -1058,10 +1109,18 @@ static void maybe_clone_option_into_selectedcontent(GumboParser* parser, GumboPa
     return;
   }
   bool is_selected_option = !!gumbo_get_attribute(&option_node->v.element.attributes, "selected");
-  if (state->_selectedcontent_state == GUMBO_SELECTEDCONTENT_AUTOMATIC) {
-    if (!is_selected_option) {
-      return;
+  if (state->_selectedcontent_state == GUMBO_SELECTEDCONTENT_AUTOMATIC && !is_selected_option) {
+    return;
+  }
+  for (const GumboNode* n = option_node->parent; n; n = n->parent) {
+    if (n == selectedcontent) {
+      return; // prevent cloning an option into its own subtree
     }
+  }
+  if (tree_has_open_or_active_formatting_element(parser, selectedcontent)) {
+    return; // cloning option frees selectedcontent contents, which is still referenced
+  }
+  if (state->_selectedcontent_state == GUMBO_SELECTEDCONTENT_AUTOMATIC) {
     GumboVector* oldies = &selectedcontent->v.element.children;
     for (unsigned int i = 0; i < oldies->length; ++i) {
       destroy_node(parser, oldies->data[i]);

@@ -1305,6 +1305,29 @@ TEST_F(GumboParserTest, SelectedcontentStrayEndTag) {
   EXPECT_STREQ("x", text->v.text.text);
 }
 
+TEST_F(GumboParserTest, SelectedcontentContentPersistsWhileDescendantOpenOrActive) {
+  Parse("<table><selectedcontent><b><td><option><option selected><td>");
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  GumboNode* selectedcontent = GetChild(body, 0);
+  EXPECT_EQ(GUMBO_TAG_SELECTEDCONTENT, GetTag(selectedcontent));
+  ASSERT_EQ(1, GetChildCount(selectedcontent));
+  EXPECT_EQ(GUMBO_TAG_B, GetTag(GetChild(selectedcontent, 0)));
+}
+
+TEST_F(GumboParserTest, SelectedcontentContentPersistsWhileFormPointerInside) {
+  Parse("<div><selectedcontent><form></div><option></option><option selected></option></form>");
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  GumboNode* div = GetChild(body, 0);
+  GumboNode* selectedcontent = GetChild(div, 0);
+  EXPECT_EQ(GUMBO_TAG_SELECTEDCONTENT, GetTag(selectedcontent));
+  ASSERT_EQ(1, GetChildCount(selectedcontent));
+  EXPECT_EQ(GUMBO_TAG_FORM, GetTag(GetChild(selectedcontent, 0)));
+}
+
 TEST_F(GumboParserTest, ImplicitColgroup) {
   Parse("<table><col /><col /></table>");
 
