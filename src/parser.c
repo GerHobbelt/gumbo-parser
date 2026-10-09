@@ -1072,6 +1072,11 @@ static void maybe_clone_option_into_selectedcontent(GumboParser* parser, GumboPa
   if (!selectedcontent) {
     return;
   }
+  for (const GumboNode* n = option_node->parent; n; n = n->parent) {
+    if (n == selectedcontent) {
+      return; // prevent cloning an option into its own subtree
+    }
+  }
   if (option_node->type != GUMBO_NODE_ELEMENT && option_node->type != GUMBO_NODE_TEMPLATE) {
     return;
   }

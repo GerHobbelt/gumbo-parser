@@ -1288,7 +1288,36 @@ TEST_F(GumboParserTest, SelectInTable) {
   ASSERT_EQ(0, GetChildCount(option));
 }
 
-TEST_F(GumboParserTest, Selectedcontent) {
+TEST_F(GumboParserTest, SelectedcontentStandalone) {
+  Parse("<selectedcontent><option>a<option selected>b");
+
+  GumboNode* body;
+  GetAndAssertBody(root_, &body);
+  ASSERT_EQ(1, GetChildCount(body));
+
+  GumboNode* selectedcontent = GetChild(body, 0);
+  ASSERT_EQ(2, GetChildCount(selectedcontent));
+
+  GumboNode* optionA = GetChild(selectedcontent, 0);
+  GumboNode* optionB = GetChild(selectedcontent, 1);
+
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, optionA->type);
+  ASSERT_EQ(GUMBO_NODE_ELEMENT, optionB->type);
+  ASSERT_EQ(GUMBO_TAG_OPTION, GetTag(optionA));
+  ASSERT_EQ(GUMBO_TAG_OPTION, GetTag(optionB));
+  ASSERT_EQ(GetChildCount(optionA), 1);
+  ASSERT_EQ(GetChildCount(optionB), 1);
+
+  GumboNode* optionTextA = GetChild(optionA, 0);
+  GumboNode* optionTextB = GetChild(optionB, 0);
+  ASSERT_EQ(GUMBO_NODE_TEXT, optionTextA->type);
+  ASSERT_EQ(GUMBO_NODE_TEXT, optionTextB->type);
+
+  EXPECT_STREQ("a", optionTextA->v.text.text);
+  EXPECT_STREQ("b", optionTextB->v.text.text);
+}
+
+TEST_F(GumboParserTest, SelectedcontentWithinSelect) {
   Parse("<select><button><selectedcontent></button><option>hello");
 
   GumboNode* body;
